@@ -11,6 +11,7 @@ object Tasks {
   private val osAddressLookupPort = Def.task(portOffset.value + 801)
   private val vehicleLookupPort = Def.task(portOffset.value + 802)
   private val vehicleDisposePort = Def.task(portOffset.value + 803)
+  private val vehiclesAcquireFulfilPort = Def.task(portOffset.value + 804)
   private val legacyServicesStubsPort = Def.task(portOffset.value + 806)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
@@ -70,6 +71,26 @@ object Tasks {
           new File(vehiclesDisposeFulfilDir.value, "vehicles-dispose-fulfil.conf"),
           setServicePortAndLegacyServicesPort(
             vehicleDisposePort.value,
+            "vss.baseurl",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
+  val vehiclesAcquireFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
+  val vehiclesAcquireFulfilDir = Def.settingDyn {classDirectory.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
+  lazy val runVehiclesAcquireFulfil = Def.task {
+    runProject(
+      vehiclesAcquireFulfilClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vehicles-acquire-fulfil.conf.enc",
+        Some(ConfigOutput(
+          new File(vehiclesAcquireFulfilDir.value, "vehicles-acquire-fulfil.conf"),
+          setServicePortAndLegacyServicesPort(
+            vehiclesAcquireFulfilPort.value,
             "vss.baseurl",
             legacyServicesStubsPort.value
           )
@@ -150,5 +171,6 @@ object Tasks {
     System.setProperty("ordnancesurvey.baseUrl", s"http://localhost:${osAddressLookupPort.value}")
     System.setProperty("vehicleLookup.baseUrl", s"http://localhost:${vehicleLookupPort.value}")
     System.setProperty("disposeVehicle.baseUrl", s"http://localhost:${vehicleDisposePort.value}")
+    System.setProperty("acquireVehicle.baseUrl", s"http://localhost:${vehiclesAcquireFulfilPort.value}")
   }
 }

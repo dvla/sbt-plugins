@@ -18,5 +18,6 @@ object SandboxSettings {
   lazy val osAddressLookupProject = settingKey[Project]("The project definition for the os address lookup")
   lazy val vehiclesLookupProject = settingKey[Project]("The project definition for the vehicles lookup project")
   lazy val vehiclesDisposeFulfilProject = settingKey[Project]("The project definition for vehicles dispose fulfil")
+  lazy val vehiclesAcquireFulfilProject = settingKey[Project]("The project definition for vehicles acquire fulfil")
   lazy val gatlingTestsProject = settingKey[Project]("The project definition for the gatling tests")
 }

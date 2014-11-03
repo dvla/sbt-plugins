@@ -34,6 +34,9 @@ object ProjectDefinitions {
   def vehiclesDisposeFulfil(version: String) =
     sandProject("vehicles-dispose-fulfil", "dvla" %% "vehicles-dispose-fulfil" % version)
 
+  def vehiclesAcquireFulfil(version: String) =
+    sandProject("vehicles-acquire-fulfil", "dvla" %% "vehicles-acquire-fulfil" % version)
+
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",
     "dvla-legacy-stub-services" % "legacy-stub-services-service" % version
