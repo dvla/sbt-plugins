@@ -161,11 +161,15 @@ object Tasks {
   }
 
   lazy val runAsyncHttpsEnvVars = Def.task {
+    val appContext = applicationContext.value match {
+      case context: String if context.isEmpty() => ""
+      case context: String => s"/$context"
+    }
     System.setProperty("https.port", httpsPort.value.toString)
     System.setProperty("http.port", "disabled")
     System.setProperty("jsse.enableSNIExtension", "false") // Disable the SNI for testing
-    System.setProperty("baseUrl", s"https://localhost:${httpsPort.value}/${applicationContext.value}")
-    System.setProperty("test.url", s"https://localhost:${httpsPort.value}/${applicationContext.value}")
+    System.setProperty("baseUrl", s"https://localhost:${httpsPort.value}$appContext")
+    System.setProperty("test.url", s"https://localhost:${httpsPort.value}$appContext/")
     System.setProperty("test.remote", "true")
     System.setProperty("bruteForcePrevention.enabled", "false")
   }
