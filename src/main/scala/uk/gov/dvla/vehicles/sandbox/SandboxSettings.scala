@@ -3,6 +3,7 @@ package uk.gov.dvla.vehicles.sandbox
 import sbt.{Project, settingKey, taskKey}
 
 object SandboxSettings {
+  lazy val applicationContext = settingKey[String]("The application context of the web app")
   lazy val portOffset = settingKey[Int]("The port offset for all the microservices.")
   lazy val gatlingSimulation = settingKey[String]("The full class name of the Gatling simulation to be run.")
   lazy val acceptanceTests = taskKey[Unit]("A task for running the acceptance tests of the project.")

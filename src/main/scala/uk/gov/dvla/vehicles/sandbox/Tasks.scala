@@ -164,7 +164,10 @@ object Tasks {
     System.setProperty("https.port", httpsPort.value.toString)
     System.setProperty("http.port", "disabled")
     System.setProperty("jsse.enableSNIExtension", "false") // Disable the SNI for testing
-    System.setProperty("baseUrl", s"https://localhost:${httpsPort.value}/sell-to-the-trade")
+    System.setProperty("baseUrl", s"https://localhost:${httpsPort.value}/${applicationContext.value}")
+    System.setProperty("test.url", s"https://localhost:${httpsPort.value}/${applicationContext.value}")
+    System.setProperty("test.remote", "true")
+    System.setProperty("bruteForcePrevention.enabled", "false")
   }
 
   val setMicroservicesPortsEnvVars = Def.task {
