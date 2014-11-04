@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -o errexit
+
+export SBT_OPTS="-Dspecs2.color=false -Dsbt.log.format=true -Dsbt.log.noformat=true -Xms1024M -Xmx3096M -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:PermSize=1024M -XX:MaxPermSize=2048M  $JAVA_OPTS"
+
+sbt clean test publish
+
