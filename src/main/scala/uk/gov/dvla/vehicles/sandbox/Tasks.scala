@@ -67,7 +67,7 @@ object Tasks {
       vehicleAndKeeperLookupClassPath.value,
       Some(ConfigDetails(
         secretRepoLocation((target in ThisProject).value),
-        "ui/dev/vehicle-and-keeper-lookup.conf.enc",
+        "ms/dev/vehicle-and-keeper-lookup.conf.enc",
         Some(ConfigOutput(
           new File(vehicleAndKeeperLookupClassDir.value, "vehicle-and-keeper-lookup.conf"),
           setServicePortAndLegacyServicesPort(
