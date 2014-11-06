@@ -72,7 +72,7 @@ object Tasks {
           new File(vehicleAndKeeperLookupClassDir.value, "vehicle-and-keeper-lookup.conf"),
           setServicePortAndLegacyServicesPort(
             vehicleAndKeeperLookupPort.value,
-            "vehicleAndKeeperLookupMicroServiceUrlBase",
+            "getVehicleAndKeeperDetails.baseurl",
             legacyServicesStubsPort.value
           )
         ))
