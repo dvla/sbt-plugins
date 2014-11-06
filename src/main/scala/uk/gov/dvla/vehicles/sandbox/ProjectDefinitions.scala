@@ -31,6 +31,9 @@ object ProjectDefinitions {
   def vehiclesLookup(version: String) =
     sandProject("vehicles-lookup", "dvla" %% "vehicles-lookup" % version)
 
+  def vehicleAndKeeperLookup(version: String) =
+    sandProject("vehicle-and-keeper-lookup", "dvla" %% "vehicle-and-keeper-lookup" % version)
+
   def vehiclesDisposeFulfil(version: String) =
     sandProject("vehicles-dispose-fulfil", "dvla" %% "vehicles-dispose-fulfil" % version)
 

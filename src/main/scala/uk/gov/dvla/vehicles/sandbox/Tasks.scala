@@ -13,6 +13,7 @@ object Tasks {
   private val vehicleDisposePort = Def.task(portOffset.value + 803)
   private val vehiclesAcquireFulfilPort = Def.task(portOffset.value + 804)
   private val legacyServicesStubsPort = Def.task(portOffset.value + 806)
+  private val vehicleAndKeeperLookupPort = Def.task(portOffset.value + 807)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -52,6 +53,26 @@ object Tasks {
           setServicePortAndLegacyServicesPort(
             vehicleLookupPort.value,
             "getVehicleDetails.baseurl",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
+  val vehicleAndKeeperLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehicleAndKeeperLookupProject.value)}
+  val vehicleAndKeeperLookupClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vehicleAndKeeperLookupProject.value)}
+  lazy val runVehicleAndKeeperLookup = Def.task {
+    runProject(
+      vehicleAndKeeperLookupClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vehicle-and-keeper-lookup.conf.enc",
+        Some(ConfigOutput(
+          new File(vehicleAndKeeperLookupClassDir.value, "vehicle-and-keeper-lookup.conf"),
+          setServicePortAndLegacyServicesPort(
+            vehicleAndKeeperLookupPort.value,
+            "vehicleAndKeeperLookupMicroServiceUrlBase",
             legacyServicesStubsPort.value
           )
         ))
