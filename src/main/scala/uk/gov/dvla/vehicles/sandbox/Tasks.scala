@@ -200,6 +200,7 @@ object Tasks {
   val setMicroservicesPortsEnvVars = Def.task {
     System.setProperty("ordnancesurvey.baseUrl", s"http://localhost:${osAddressLookupPort.value}")
     System.setProperty("vehicleLookup.baseUrl", s"http://localhost:${vehicleLookupPort.value}")
+    System.setProperty("vehicleAndKeeperLookupMicroServiceUrlBase", s"http://localhost:${vehicleAndKeeperLookupPort.value}")
     System.setProperty("disposeVehicle.baseUrl", s"http://localhost:${vehicleDisposePort.value}")
     System.setProperty("acquireVehicle.baseUrl", s"http://localhost:${vehiclesAcquireFulfilPort.value}")
   }
