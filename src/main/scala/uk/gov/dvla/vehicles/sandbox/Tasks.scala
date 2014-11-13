@@ -34,7 +34,8 @@ object Tasks {
         "ms/dev/os-address-lookup.conf.enc",
         Some(ConfigOutput(
           new File(osAddressLookupClassDir.value, "os-address-lookup.conf"),
-          setServicePort(osAddressLookupPort.value)
+          properties =>
+            setOrdnanceSurveyRequestTimeout(30000)(setServicePort(osAddressLookupPort.value)(properties))
         ))
       ))
     )

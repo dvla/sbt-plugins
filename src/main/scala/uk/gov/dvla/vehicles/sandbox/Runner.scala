@@ -114,6 +114,12 @@ object Runner {
   """.stripMargin
   }
 
+def setOrdnanceSurveyRequestTimeout(timeout: Int)(properties: String): String =
+    (s"""ordnancesurvey.requesttimeout = "$timeout"""" :: properties.lines
+      .filterNot(_.contains("ordnancesurvey.requesttimeout"))
+      .toList )
+      .mkString(util.Properties.lineSeparator)
+
   def updatePropertyPort(urlProperty: String, newPort: Int)(properties: String): String = {
     val config = ConfigFactory.parseReader(new StringReader(properties))
     val url = new URL(config.getString(urlProperty))
