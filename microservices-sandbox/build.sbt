@@ -1,4 +1,5 @@
 import sbt._
+import Common._
 
 sbtPlugin := true
 
@@ -6,38 +7,24 @@ name := "microservices-sandbox"
 
 version := "1.0.1-SNAPSHOT"
 
-organization := "dvla"
+crossScalaVersions := crossScalaBuildingSeq
 
-organizationName := "Driver & Vehicle Licensing Agency"
+organization := organisationString
 
-scalaVersion := "2.10.3"
+organizationName := organisationNameString
 
-lazy val microservicesSanbox = project in file("microservices-sandbox")
+scalacOptions := scalaOptionsSeq
 
-lazy val root = project.in(file(".")).aggregate(microservicesSanbox)
+publishTo.<<=(publishResolver)
 
-scalacOptions := Seq(
-  "-deprecation",
-  "-unchecked",
-  "-feature",
-  "-Xlint",
-  "-language:reflectiveCalls",
-  "-Xmax-classfile-name", "128"
-)
-
-val nexus = "http://rep002-01.skyscape.preview-dvla.co.uk:8081/nexus/content/repositories"
-
-publishTo.<<=(version { v: String =>
-  if (v.trim.endsWith("SNAPSHOT"))
-    Some("snapshots" at s"$nexus/snapshots")
-  else
-    Some("releases" at s"$nexus/releases")
-})
-
-credentials := Seq(Credentials(Path.userHome / ".sbt/.credentials"))
+credentials += sbtCredentials
 
 libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.4" withSources() withJavadoc(),
   "com.typesafe" % "config" % "1.2.1" withSources() withJavadoc()
 )
+
+lazy val microservicesSanbox = project in file("microservices-sandbox")
+
+lazy val root = project.in(file(".")).aggregate(microservicesSanbox)
 
