@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 object Common {
-  val crossScalaBuildingSeq =  Seq("2.10.3", "2.11.1")
+  val scalaVersionString = "2.10.4"
   val organisationString = "dvla"
   val organisationNameString = "Driver & Vehicle Licensing Agency"
   val nexus = "http://rep002-01.skyscape.preview-dvla.co.uk:8081/nexus/content/repositories"
