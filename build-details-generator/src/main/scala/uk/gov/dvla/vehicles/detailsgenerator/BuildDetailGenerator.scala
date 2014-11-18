@@ -1,3 +1,5 @@
+package uk.gov.dvla.vehicles.detailsgenerator
+
 import java.io.File
 import java.util.Date
 
@@ -6,9 +8,10 @@ import sbt.Scoped.Apply2
 import sbt._
 
 object BuildDetailGenerator extends AutoPlugin {
+  override def trigger = allRequirements
 
-  override lazy val buildSettings = Seq(
-    compile.in(Compile) := runSequentially(saveBuildDetails, compile.in(Compile)).value
+  override def projectSettings = Seq(
+    compile.in(ThisProject).in(Compile) := runSequentially(saveBuildDetails, compile.in(ThisProject).in(Compile)).value
   )
 
   def prop(name: String) = sys.props.getOrElse(name, "Unknown")
