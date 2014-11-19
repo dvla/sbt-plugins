@@ -11,7 +11,7 @@ object BuildDetailGenerator extends AutoPlugin {
   override def trigger = allRequirements
 
   override def projectSettings = Seq(
-    compile.in(ThisProject).in(Compile) := runSequentially(saveBuildDetails, compile.in(ThisProject).in(Compile)).value
+    compile :=  runSequentially(saveBuildDetails, compile.in(ThisProject).in(Compile)).value
   )
 
   def prop(name: String) = sys.props.getOrElse(name, "Unknown")
