@@ -24,3 +24,6 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.2.1" withSources() withJavadoc()
 )
 
+// Uncomment next line when released and before publishing to github. NOTE: bintray plugin doesn't work with SNAPSHOTS
+//bintrayPublishSettings
+
