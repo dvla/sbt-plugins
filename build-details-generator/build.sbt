@@ -4,7 +4,7 @@ sbtPlugin := true
 
 name := "build-details-generator"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0"
 
 scalaVersion := scalaVersionString
 

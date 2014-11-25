@@ -5,7 +5,7 @@ sbtPlugin := true
 
 name := "microservices-sandbox"
 
-version := "1.0.1-SNAPSHOT"
+version := "1.0.1"
 
 scalaVersion := scalaVersionString
 
