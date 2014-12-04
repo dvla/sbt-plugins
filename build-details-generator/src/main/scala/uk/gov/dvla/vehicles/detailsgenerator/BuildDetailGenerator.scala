@@ -19,8 +19,7 @@ object BuildDetailGenerator extends AutoPlugin {
 
   def prop(name: String) = sys.props.getOrElse(name, "Unknown")
   def buildDetails(name: String, version: String, sbtVersion: String): String =
-    s"""{
-       |Name: $name
+    s"""Name: $name
        |Version: $version
        |
        |Build on: ${new Date()}
