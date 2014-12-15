@@ -14,7 +14,7 @@ val commonSettings = Seq(
 ) ++ Seq (
   bintrayOrganization := None,
   repository := "maven"
-) ++ bintrayPublishSettings
+) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
 lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
   .settings(name := "microservices-sandbox")
