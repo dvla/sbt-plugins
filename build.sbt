@@ -1,5 +1,4 @@
 import Common._
-import bintray.Keys._
 
 val commonSettings = Seq(
   sbtPlugin := true,
@@ -12,8 +11,8 @@ val commonSettings = Seq(
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   BintrayCredentials.bintrayCredentialsTask
 ) ++ Seq (
-  bintrayOrganization := None,
-  repository := "maven"
+  bintray.Keys.bintrayOrganization := None,
+  bintray.Keys.repository := "maven"
 ) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
 lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
