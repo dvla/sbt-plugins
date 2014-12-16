@@ -17,7 +17,7 @@ val commonSettings = Seq(
 
 lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
   .settings(name := "microservices-sandbox")
-  .settings(version := "1.1-SNAPSHOT")
+  .settings(version := "1.1")
   .settings(commonSettings:_*)
   .settings(
     libraryDependencies ++= Seq(
@@ -29,7 +29,7 @@ lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
 
 lazy val buildDetailsGenerator = project.in(file("build-details-generator"))
   .settings(name := "build-details-generator")
-  .settings(version := "1.1-SNAPSHOT")
+  .settings(version := "1.1")
   .settings(commonSettings:_*)
   .settings(publishMavenStyle := true)
 
