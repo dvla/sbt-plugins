@@ -13,7 +13,7 @@ val commonSettings = Seq(
 ) ++ Seq (
   bintray.Keys.bintrayOrganization := None,
   bintray.Keys.repository := "maven"
-) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
+) ++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
 lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
   .settings(name := "microservices-sandbox")
