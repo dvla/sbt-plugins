@@ -190,6 +190,8 @@ object Tasks {
       case context: String if context.isEmpty() => ""
       case context: String => s"/$context"
     }
+    System.setProperty("openingTime", "0")
+    System.setProperty("closingTime", "24")
     System.setProperty("https.port", httpsPort.value.toString)
     System.setProperty("http.port", "disabled")
     System.setProperty("jsse.enableSNIExtension", "false") // Disable the SNI for testing
