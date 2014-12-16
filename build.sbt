@@ -9,14 +9,11 @@ val commonSettings = Seq(
   publishTo.<<=(publishResolver),
   credentials += sbtCredentials,
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
-  BintrayCredentials.bintrayCredentialsTask
-) ++ Seq (
-  bintray.Keys.bintrayOrganization := None,
-  bintray.Keys.repository := "maven"
+  BintrayCredentials.bintrayCredentialsTask,
+  bintray.Keys.bintrayOrganization := None
 ) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
-lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
-  .settings(name := "microservices-sandbox")
+lazy val microservicesSandbox = Project("microservices-sandbox", file("microservices-sandbox"))
   .settings(version := "1.1")
   .settings(commonSettings:_*)
   .settings(
@@ -25,12 +22,9 @@ lazy val microservicesSandbox = project.in(file("microservices-sandbox"))
       "com.typesafe" % "config" % "1.2.1" withSources() withJavadoc()
     )
   )
-  .settings(publishMavenStyle := true)
 
-lazy val buildDetailsGenerator = project.in(file("build-details-generator"))
-  .settings(name := "build-details-generator")
+lazy val buildDetailsGenerator = Project("build-details-generator", file("build-details-generator"))
   .settings(version := "1.1")
   .settings(commonSettings:_*)
-  .settings(publishMavenStyle := true)
 
 publish := {}
