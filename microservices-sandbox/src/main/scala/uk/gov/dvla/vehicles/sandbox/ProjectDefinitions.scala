@@ -40,6 +40,15 @@ object ProjectDefinitions {
   def vehiclesAcquireFulfil(version: String) =
     sandProject("vehicles-acquire-fulfil", "dvla" %% "vehicles-acquire-fulfil" % version)
 
+  def paymentSolve(version: String) =
+    sandProject("payment-solve", "dvla" %% "payment-solve" % version)
+
+  def vrmRetentionEligibility(version: String) =
+    sandProject("vrm-retention-eligibility", "dvla" %% "vrm-retention-eligibility" % version)
+
+  def vrmRetentionRetain(version: String) =
+    sandProject("vrm-retention-retain", "dvla" %% "vrm-retention-retain" % version)
+
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",
     "dvla-legacy-stub-services" % "legacy-stub-services-service" % version

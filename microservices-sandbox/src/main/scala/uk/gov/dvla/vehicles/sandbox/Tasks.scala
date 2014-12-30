@@ -14,6 +14,9 @@ object Tasks {
   private val vehiclesAcquireFulfilPort = Def.task(portOffset.value + 804)
   private val legacyServicesStubsPort = Def.task(portOffset.value + 806)
   private val vehicleAndKeeperLookupPort = Def.task(portOffset.value + 807)
+  private val paymentSolvePort = Def.task(portOffset.value + 808)
+  private val vrmRetentionEligibilityPort = Def.task(portOffset.value + 809)
+  private val vrmRetentionRetainPort = Def.task(portOffset.value + 810)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -122,6 +125,62 @@ object Tasks {
     )
   }
 
+  val paymentSolveClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(paymentSolveProject.value)}
+  val paymentSolveClassDir = Def.settingDyn {classDirectory.in(Runtime).in(paymentSolveProject.value)}
+  lazy val runPaymentSolve = Def.task {
+    runProject(
+      paymentSolveClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/payment-solve.conf.enc",
+        Some(ConfigOutput(
+          new File(paymentSolveClassDir.value, "payment-solve.conf"),
+          setServicePort(paymentSolvePort.value)
+        ))
+      ))
+    )
+  }
+
+  val vrmRetentionEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionEligibilityProject.value)}
+  val vrmRetentionEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionEligibilityProject.value)}
+  lazy val runVrmRetentionEligibility = Def.task {
+    runProject(
+      vrmRetentionEligibilityClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vrm-retention-eligibility.conf.enc",
+        Some(ConfigOutput(
+          new File(vrmRetentionEligibilityClassDir.value, "vrm-retention-eligibility.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmRetentionEligibilityPort.value,
+            "validateRetain.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
+  val vrmRetentionRetainClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionRetainProject.value)}
+  val vrmRetentionRetainClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionRetainProject.value)}
+  lazy val runVrmRetentionRetain = Def.task {
+    runProject(
+      vrmRetentionRetainClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vrm-retention-retain.conf.enc",
+        Some(ConfigOutput(
+          new File(vrmRetentionRetainClassDir.value, "vrm-retention-retain.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmRetentionRetainPort.value,
+            "retain.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
   lazy val runAppAndMicroservices = Def.task {
     runAllMicroservices.value
     run.in(Compile).toTask("").value
@@ -207,5 +266,8 @@ object Tasks {
     System.setProperty("vehicleAndKeeperLookupMicroServiceUrlBase", s"http://localhost:${vehicleAndKeeperLookupPort.value}")
     System.setProperty("disposeVehicle.baseUrl", s"http://localhost:${vehicleDisposePort.value}")
     System.setProperty("acquireVehicle.baseUrl", s"http://localhost:${vehiclesAcquireFulfilPort.value}")
+    System.setProperty("paymentSolveMicroServiceUrlBase", s"http://localhost:${paymentSolvePort.value}")
+    System.setProperty("vrmRetentionEligibilityMicroServiceUrlBase", s"http://localhost:${vrmRetentionEligibilityPort.value}")
+    System.setProperty("vrmRetentionRetainMicroServiceUrlBase", s"http://localhost:${vrmRetentionRetainPort.value}")
   }
 }
