@@ -25,6 +25,11 @@ object Tasks {
       None,
       runJavaMain("service.LegacyServicesRunner", Array(legacyServicesStubsPort.value.toString))
     )
+
+    if (bruteForceEnabled.value) sys.props ++= Map(
+      "bruteForcePrevention.enabled" -> "true",
+      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
+    )
   }
 
   val osAddressLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(osAddressLookupProject.value)}
@@ -258,6 +263,9 @@ object Tasks {
       "baseUrl" -> s"https://localhost:${httpsPort.value}$appContext",
       "test.url" -> s"https://localhost:${httpsPort.value}$appContext/",
       "test.remote" -> "true",
+      "bruteForcePrevention.enabled" -> "false"
+    )
+    if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",
       "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
     )
