@@ -201,7 +201,7 @@ object Tasks {
       IO.delete(vehiclesGatlingExtractDir)
       vehiclesGatlingExtractDir.mkdirs()
       extractVehiclesGatlingJar(vehiclesGatlingExtractDir)
-      System.setProperty("gatling.core.disableCompiler", "true")
+      sys.props += "gatling.core.disableCompiler" -> "true"
       runProject(
         gatlingTestsClassPath.value,
         None,
@@ -231,7 +231,7 @@ object Tasks {
       None,
       runScalaMain("play.core.server.NettyServer", Array((baseDirectory in ThisProject).value.getAbsolutePath))
     )
-    System.setProperty("acceptance.test.url", s"https://localhost:${httpsPort.value}/sell-to-the-trade/")
+    sys.props += "acceptance.test.url" -> s"https://localhost:${httpsPort.value}/sell-to-the-trade/"
   }
 
   lazy val runAppAndMicroservicesAsync = Def.task[Unit] {
@@ -249,25 +249,30 @@ object Tasks {
       case context: String if context.isEmpty() => ""
       case context: String => s"/$context"
     }
-    System.setProperty("openingTime", "0")
-    System.setProperty("closingTime", "24")
-    System.setProperty("https.port", httpsPort.value.toString)
-    System.setProperty("http.port", "disabled")
-    System.setProperty("jsse.enableSNIExtension", "false") // Disable the SNI for testing
-    System.setProperty("baseUrl", s"https://localhost:${httpsPort.value}$appContext")
-    System.setProperty("test.url", s"https://localhost:${httpsPort.value}$appContext/")
-    System.setProperty("test.remote", "true")
-    System.setProperty("bruteForcePrevention.enabled", "false")
+    sys.props ++= Map(
+      "openingTime" -> "0",
+      "closingTime" -> "24",
+      "https.port" -> httpsPort.value.toString,
+      "http.port" -> "disabled",
+      "jsse.enableSNIExtension" -> "false", // Disable the SNI for testing
+      "baseUrl" -> s"https://localhost:${httpsPort.value}$appContext",
+      "test.url" -> s"https://localhost:${httpsPort.value}$appContext/",
+      "test.remote" -> "true",
+      "bruteForcePrevention.enabled" -> "true",
+      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
+    )
   }
 
   val setMicroservicesPortsEnvVars = Def.task {
-    System.setProperty("ordnancesurvey.baseUrl", s"http://localhost:${osAddressLookupPort.value}")
-    System.setProperty("vehicleLookup.baseUrl", s"http://localhost:${vehicleLookupPort.value}")
-    System.setProperty("vehicleAndKeeperLookupMicroServiceUrlBase", s"http://localhost:${vehicleAndKeeperLookupPort.value}")
-    System.setProperty("disposeVehicle.baseUrl", s"http://localhost:${vehicleDisposePort.value}")
-    System.setProperty("acquireVehicle.baseUrl", s"http://localhost:${vehiclesAcquireFulfilPort.value}")
-    System.setProperty("paymentSolveMicroServiceUrlBase", s"http://localhost:${paymentSolvePort.value}")
-    System.setProperty("vrmRetentionEligibilityMicroServiceUrlBase", s"http://localhost:${vrmRetentionEligibilityPort.value}")
-    System.setProperty("vrmRetentionRetainMicroServiceUrlBase", s"http://localhost:${vrmRetentionRetainPort.value}")
+    sys.props ++= Map(
+      "ordnancesurvey.baseUrl" -> s"http://localhost:${osAddressLookupPort.value}",
+      "vehicleLookup.baseUrl" -> s"http://localhost:${vehicleLookupPort.value}",
+      "vehicleAndKeeperLookupMicroServiceUrlBase" -> s"http://localhost:${vehicleAndKeeperLookupPort.value}",
+      "disposeVehicle.baseUrl" -> s"http://localhost:${vehicleDisposePort.value}",
+      "acquireVehicle.baseUrl" -> s"http://localhost:${vehiclesAcquireFulfilPort.value}",
+      "paymentSolveMicroServiceUrlBase" -> s"http://localhost:${paymentSolvePort.value}",
+      "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
+      "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}"
+    )
   }
 }
