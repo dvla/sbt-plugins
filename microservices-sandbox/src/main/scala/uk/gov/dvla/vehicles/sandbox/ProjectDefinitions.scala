@@ -49,6 +49,12 @@ object ProjectDefinitions {
   def vrmRetentionRetain(version: String) =
     sandProject("vrm-retention-retain", "dvla" %% "vrm-retention-retain" % version)
 
+  def vrmAssignEligibility(version: String) =
+    sandProject("vrm-assign-eligibility", "dvla" %% "vrm-assign-eligibility" % version)
+
+  def vrmAssignFulfil(version: String) =
+    sandProject("vrm-assign-fulfil", "dvla" %% "vrm-assign-fulfil" % version)
+
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",
     "dvla-legacy-stub-services" % "legacy-stub-services-service" % version

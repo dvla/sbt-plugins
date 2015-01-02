@@ -17,6 +17,8 @@ object Tasks {
   private val paymentSolvePort = Def.task(portOffset.value + 808)
   private val vrmRetentionEligibilityPort = Def.task(portOffset.value + 809)
   private val vrmRetentionRetainPort = Def.task(portOffset.value + 810)
+  private val vrmAssignEligibilityPort = Def.task(portOffset.value + 811)
+  private val vrmAssignFulfilPort = Def.task(portOffset.value + 812)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -186,6 +188,46 @@ object Tasks {
     )
   }
 
+  val vrmAssignEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignEligibilityProject.value)}
+  val vrmAssignEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignEligibilityProject.value)}
+  lazy val runVrmAssignEligibility = Def.task {
+    runProject(
+      vrmAssignEligibilityClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vrm-assign-eligibility.conf.enc",
+        Some(ConfigOutput(
+          new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmAssignEligibilityPort.value,
+            "validateAssign.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
+  val vrmAssignFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignFulfilProject.value)}
+  val vrmAssignFulfilClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignFulfilProject.value)}
+  lazy val runVrmAssignFulfil = Def.task {
+    runProject(
+      vrmAssignFulfilClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/vrm-assign-fulfil.conf.enc",
+        Some(ConfigOutput(
+          new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmAssignFulfilPort.value,
+            "assignFulfil.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
   lazy val runAppAndMicroservices = Def.task {
     runAllMicroservices.value
     run.in(Compile).toTask("").value
@@ -280,7 +322,9 @@ object Tasks {
       "acquireVehicle.baseUrl" -> s"http://localhost:${vehiclesAcquireFulfilPort.value}",
       "paymentSolveMicroServiceUrlBase" -> s"http://localhost:${paymentSolvePort.value}",
       "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
-      "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}"
+      "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
+      "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
+      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}"
     )
   }
 }

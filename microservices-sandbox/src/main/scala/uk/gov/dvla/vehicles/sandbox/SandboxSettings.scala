@@ -25,5 +25,7 @@ object SandboxSettings {
   lazy val paymentSolveProject = settingKey[Project]("The project definition for the payment solve project")
   lazy val vrmRetentionEligibilityProject = settingKey[Project]("The project definition for the vehicle registration mark retention eligibility project")
   lazy val vrmRetentionRetainProject = settingKey[Project]("The project definition for the vehicle registration mark retention retain project")
+  lazy val vrmAssignEligibilityProject = settingKey[Project]("The project definition for the vehicle registration mark assign eligibility project")
+  lazy val vrmAssignFulfilProject = settingKey[Project]("The project definition for the vehicle registration mark assign fulfil project")
   lazy val bruteForceEnabled = settingKey[Boolean]("Weather or not to enable the stub BruteForce service")
 }
