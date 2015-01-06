@@ -15,11 +15,14 @@ object Sandbox extends AutoPlugin {
   lazy val sandboxAsyncTask = sandboxAsync :=
     runSequentially(prerequisitesCheck, setMicroservicesPortsEnvVars, runAppAndMicroservicesAsync).value
 
-  lazy val gatlingTask = gatling := runSequentially(sandboxAsync, testGatling).value
+  lazy val gatlingTask = gatling := runSequentially(sandboxAsync, testGatling, loadTests).value
 
   lazy val acceptTask = accept := runSequentially(sandboxAsync, allAcceptanceTests).value
 
   override def projectSettings = Seq(
-    SandboxSettings.bruteForceEnabled := false
+    SandboxSettings.bruteForceEnabled := false,
+    SandboxSettings.gatlingSimulation := "",
+    SandboxSettings.runAllMicroservices := {},
+    SandboxSettings.loadTests := {}
   )
 }
