@@ -289,6 +289,7 @@ object Tasks {
   lazy val allAcceptanceTests = Def.task {
     acceptanceTests.value
     testGatling.value
+    loadTests.value
   }
 
   lazy val runAsyncHttpsEnvVars = Def.task {
