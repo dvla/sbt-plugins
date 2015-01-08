@@ -233,43 +233,6 @@ object Tasks {
     run.in(Compile).toTask("").value
   }
 
-  val gatlingTestsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(gatlingTestsProject.value)}
-  val gatlingTestsTargetDir = Def.settingDyn {target.in(gatlingTestsProject.value)}
-  lazy val testGatling = Def.task {
-    val gatlingSimulationClass = gatlingSimulation.value
-    def extractVehiclesGatlingJar(toFolder: File) =
-      gatlingTestsClassPath.value.find(
-        _.data.toURI.toURL.toString.endsWith(s"vehicles-gatling-$VersionVehiclesGatling.jar")
-      ).map { jar => IO.unzip(new File(jar.data.toURI.toURL.getFile), toFolder)}
-
-    if (!gatlingSimulationClass.isEmpty) {
-      val targetFolder = gatlingTestsTargetDir.value.getAbsolutePath
-      val vehiclesGatlingExtractDir = new File(s"$targetFolder/gatlingJarExtract")
-      IO.delete(vehiclesGatlingExtractDir)
-      vehiclesGatlingExtractDir.mkdirs()
-      extractVehiclesGatlingJar(vehiclesGatlingExtractDir)
-      sys.props += "gatling.core.disableCompiler" -> "true"
-      runProject(
-        gatlingTestsClassPath.value,
-        None,
-        runJavaMain(
-          mainClassName = "io.gatling.app.Gatling",
-          args = Array(
-            "--simulation", gatlingSimulation.value,
-            "--data-folder", s"${vehiclesGatlingExtractDir.getAbsolutePath}/data",
-            "--results-folder", s"$targetFolder/gatling",
-            "--request-bodies-folder", s"$targetFolder/request-bodies"
-          ),
-          method = "runGatling"
-        )
-      ) match {
-        case 0 => println("Gatling execution SUCCESS")
-        case exitCode =>
-          println("Gatling execution FAILURE")
-          throw new Exception(s"Gatling run exited with error $exitCode")
-      }
-    }
-  }
 
   lazy val runAsync = Def.task {
     runAsyncHttpsEnvVars.value
@@ -288,7 +251,6 @@ object Tasks {
 
   lazy val allAcceptanceTests = Def.task {
     acceptanceTests.value
-    testGatling.value
     loadTests.value
   }
 
