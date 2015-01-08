@@ -15,7 +15,7 @@ object SandboxSettings {
   lazy val gatling = taskKey[Unit]("Runs the gatling only tests against the sandbox")
   lazy val cucumber = taskKey[Unit]("Runs the cucumber only tests against the sandbox")
   lazy val accept = taskKey[Unit]("Runs all the acceptance tests against the sandbox.")
-  lazy val acceptRemote = taskKey[Unit]("Runs all the acceptance tests against a running application specified wit test.url system property.")
+  lazy val acceptRemote = taskKey[Unit]("Runs all the acceptance tests against a running application specified with the test.url system property.")
 
   lazy val legacyStubsProject = settingKey[Project]("The project definition for the Legacy Stubs Services")
   lazy val osAddressLookupProject = settingKey[Project]("The project definition for the os address lookup")
