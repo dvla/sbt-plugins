@@ -27,11 +27,6 @@ object Tasks {
       None,
       runJavaMain("service.LegacyServicesRunner", Array(legacyServicesStubsPort.value.toString))
     )
-
-    if (bruteForceEnabled.value) sys.props ++= Map(
-      "bruteForcePrevention.enabled" -> "true",
-      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
-    )
   }
 
   val osAddressLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(osAddressLookupProject.value)}
@@ -288,6 +283,10 @@ object Tasks {
       "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
       "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}"
+    )
+    if (bruteForceEnabled.value) sys.props ++= Map(
+      "bruteForcePrevention.enabled" -> "true",
+      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
     )
   }
 }
