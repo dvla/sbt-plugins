@@ -55,6 +55,9 @@ object ProjectDefinitions {
   def vrmAssignFulfil(version: String) =
     sandProject("vrm-assign-fulfil", "dvla" %% "vrm-assign-fulfil" % version)
 
+  def audit(version: String) =
+    sandProject("audit", "dvla" %% "audit" % version)
+
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",
     "dvla-legacy-stub-services" % "legacy-stub-services-service" % version
