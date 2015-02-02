@@ -233,12 +233,10 @@ object Tasks {
         secretRepoLocation((target in ThisProject).value),
         "ms/dev/audit.conf.enc",
         Some(ConfigOutput(
-          new File(vrmRetentionRetainClassDir.value, "audit.conf"),
-          setServicePortAndLegacyServicesPort(
-            auditPort.value,
-            "audit.url",
-            legacyServicesStubsPort.value
-          )
+          new File(auditClassDir.value, "audit.conf"),
+          properties =>
+            properties
+            //substituteProp("rabbitmq.host", "NOT FOUND")(properties)
         ))
       ))
     )
