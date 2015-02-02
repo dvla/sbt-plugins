@@ -19,6 +19,7 @@ object Tasks {
   private val vrmRetentionRetainPort = Def.task(portOffset.value + 810)
   private val vrmAssignEligibilityPort = Def.task(portOffset.value + 811)
   private val vrmAssignFulfilPort = Def.task(portOffset.value + 812)
+  private val auditPort = Def.task(portOffset.value + 813)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -223,6 +224,26 @@ object Tasks {
     )
   }
 
+  val auditClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(auditProject.value)}
+  val auditClassDir = Def.settingDyn {classDirectory.in(Runtime).in(auditProject.value)}
+  lazy val runAudit = Def.task {
+    runProject(
+      auditClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/audit.conf.enc",
+        Some(ConfigOutput(
+          new File(vrmRetentionRetainClassDir.value, "audit.conf"),
+          setServicePortAndLegacyServicesPort(
+            auditPort.value,
+            "audit.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
+
   lazy val runAppAndMicroservices = Def.task {
     runAllMicroservices.value
     run.in(Compile).toTask("").value
@@ -282,7 +303,8 @@ object Tasks {
       "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
       "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
-      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}"
+      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
+      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}"
     )
     if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",
