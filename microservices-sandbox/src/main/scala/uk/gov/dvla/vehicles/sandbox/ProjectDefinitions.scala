@@ -56,7 +56,7 @@ object ProjectDefinitions {
     sandProject("vrm-assign-fulfil", "dvla" %% "vrm-assign-fulfil" % version)
 
   def audit(version: String) =
-    sandProject("audit", "dvla" %% "audit" % version)
+    sandProject("audit", "dvla" % "audit_2.11" % version)
 
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",
