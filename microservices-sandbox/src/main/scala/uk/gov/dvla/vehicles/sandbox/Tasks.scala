@@ -301,8 +301,8 @@ object Tasks {
       "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
       "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
-      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
-      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}"
+      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}"//,
+//      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}" // Disabled for now due to it needing to be in scala 2.11 but the webapp is still scala 2.10.
     )
     if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",
