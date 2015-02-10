@@ -55,6 +55,9 @@ object ProjectDefinitions {
   def vrmAssignFulfil(version: String) =
     sandProject("vrm-assign-fulfil", "dvla" %% "vrm-assign-fulfil" % version)
 
+  def emailService(version: String) =
+    sandProject("email-service", "dvla" %% "email-service" % version)
+
   def audit(version: String) =
     sandProject("audit", "dvla" % "audit_2.11" % version)
 

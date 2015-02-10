@@ -20,6 +20,7 @@ object Tasks {
   private val vrmAssignEligibilityPort = Def.task(portOffset.value + 811)
   private val vrmAssignFulfilPort = Def.task(portOffset.value + 812)
   private val auditPort = Def.task(portOffset.value + 813)
+  private val emailServicePort = Def.task(portOffset.value + 814)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -242,6 +243,24 @@ object Tasks {
     )
   }
 
+  val emailServiceClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(emailServiceProject.value)}
+  val emailServiceClassDir = Def.settingDyn {classDirectory.in(Runtime).in(emailServiceProject.value)}
+  lazy val runEmailService = Def.task {
+    runProject(
+      emailServiceClassPath.value,
+      Some(ConfigDetails(
+        secretRepoLocation((target in ThisProject).value),
+        "ms/dev/email-service.conf.enc",
+        Some(ConfigOutput(
+          new File(emailServiceClassDir.value, "email-service.conf"),
+          properties =>
+            properties
+          //substituteProp("rabbitmq.host", "NOT FOUND")(properties)
+        ))
+      ))
+    )
+  }
+
   lazy val runAppAndMicroservices = Def.task {
     runAllMicroservices.value
     run.in(Compile).toTask("").value
@@ -301,8 +320,9 @@ object Tasks {
       "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
       "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
-      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}"//,
-//      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}" // Disabled for now due to it needing to be in scala 2.11 but the webapp is still scala 2.10.
+      "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
+      "emailServiceMicroServiceUrlBase" -> s"http://localhost:${emailServicePort.value}"//,
+    //      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}" // Disabled for now due to it needing to be in scala 2.11 but the webapp is still scala 2.10.
     )
     if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",
