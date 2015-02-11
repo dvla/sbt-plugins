@@ -253,9 +253,7 @@ object Tasks {
         "ms/dev/email-service.conf.enc",
         Some(ConfigOutput(
           new File(emailServiceClassDir.value, "email-service.conf"),
-          properties =>
-            properties
-          //substituteProp("rabbitmq.host", "NOT FOUND")(properties)
+          setServicePort(emailServicePort.value)
         ))
       ))
     )
