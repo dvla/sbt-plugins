@@ -43,7 +43,11 @@ object Tasks {
           new File(osAddressLookupClassDir.value, "os-address-lookup.conf"),
           properties =>
             substituteProp("ordnancesurvey.requesttimeout", "30000")
-                          (setServicePort(osAddressLookupPort.value)(properties))
+              (setServicePortAndLegacyServicesPort(
+                osAddressLookupPort.value,
+                "ordnancesurvey.preproduction.baseurl",
+                legacyServicesStubsPort.value
+              )(properties))
         ))
       ))
     )
