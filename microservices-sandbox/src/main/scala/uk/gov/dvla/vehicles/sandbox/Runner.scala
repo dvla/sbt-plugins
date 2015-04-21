@@ -118,7 +118,7 @@ def substituteProp(prop: String, value: String)(properties: String): String =
     val config = ConfigFactory.parseReader(new StringReader(properties))
     val url = new URL(config.getString(urlProperty))
 
-    val newUrl = new URL(url.getProtocol, url.getHost, newPort, url.getFile).toString
+    val newUrl = new URL("http", "localhost", newPort, url.getFile).toString
 
     properties.replace(url.toString, newUrl.toString)
   }
