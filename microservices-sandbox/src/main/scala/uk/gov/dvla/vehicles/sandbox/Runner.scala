@@ -18,15 +18,28 @@ object Runner {
 
   type ITask[T]  = Def.Initialize[Task[T]]
 
+  /**
+   * Executes two task a and b in a sequence. B will start executing after a has finished.
+   */
   def runSequentially[A, B](a: ITask[A], b: ITask[B]) =
     new Apply2((a, b)).apply((a, b) => a.flatMap(x => b))
 
+  /**
+   * Executes three task a and b and c in a sequence.
+   * C will start executing after b has finished.
+   * B will start executing after a has finished.
+   */
   def runSequentially[A, B, C](a: ITask[A], b: ITask[B], c: ITask[C]) =
     new Apply3((a, b, c)).apply((a, b, c) => a.flatMap(x => b.flatMap(x => c)))
 
   def secretRepoLocation(targetFolder: File): File =
     new File(targetFolder, "secretRepo")
 
+  /**
+   * Executes a piece of code with the passed class loader set a a context class loader
+   * @param classLoader the class loader to be used as a context class loader
+   * @param code to be executed
+   */
   def withClassLoader[T](classLoader: ClassLoader)(code: => T) {
     val currentContextClassLoader = Thread.currentThread().getContextClassLoader
     Thread.currentThread().setContextClassLoader(classLoader)
@@ -34,6 +47,14 @@ object Runner {
     finally Thread.currentThread().setContextClassLoader(currentContextClassLoader)
   }
 
+  /**
+   * Executes a Scala App class with arguments within the passed class loader.
+   * @param mainClassName the main class full path
+   * @param args the arguments to be passed to the main method
+   * @param method the static method to be executed. The default is "main"
+   * @param prjClassLoader the class loader to be used to instantiate the main class.
+   *                       Will be used as a context class loader as well.
+   */
   def runScalaMain(mainClassName: String, args: Array[String] = Array[String](), method: String = "main")
                   (prjClassLoader: ClassLoader): Any = withClassLoader[Any](prjClassLoader) {
     this.synchronized {
@@ -47,6 +68,14 @@ object Runner {
     }
   }
 
+  /**
+   * Executes a Java main class with arguments within the passed class loader.
+   * @param mainClassName the main class full path
+   * @param args the arguments to be passed to the main method
+   * @param method the static method to be executed. The default is "main"
+   * @param prjClassLoader the class loader to be used to instantiate the main class.
+   *                       Will be used as a context class loader as well.
+   */
   def runJavaMain(mainClassName: String, args: Array[String] = Array[String](), method: String = "main")
                  (prjClassLoader: ClassLoader): Any = withClassLoader(prjClassLoader) {
     val mainClass = prjClassLoader.loadClass(mainClassName)
@@ -55,17 +84,29 @@ object Runner {
     return mainResult
   }
 
+  /**
+   * Details used to extract the typesefe configuration file out of the secrets repository
+   * @param secretRepo the location of the temp secret repo
+   * @param encryptedConfig the path to the encrypted configuration that needs to be decrypted
+   * @param output the decrypted file configuration along with some transformation e.g. adding extra properties.
+   *               By default there is no transformation applied to the decrypted configuration.
+   */
   case class ConfigDetails(secretRepo: File,
                            encryptedConfig: String,
-                           output: Option[ConfigOutput],
-                           systemPropertySetter: String => Unit = a => ())
+                           output: Option[ConfigOutput])
 
+  /**
+   * Configuration about where to write a decrypted configuration along with an optional transform over it.
+   * @param decryptedOutput the file to be written after decrypting a configuration file from secrets.
+   * @param transform a transform to apply over the decrypted file. Could be used to modify existing props, add new
+   *                  properties or delete properties.
+   */
   case class ConfigOutput(decryptedOutput: File, transform: String => String = a => a)
 
   def runProject(prjClassPath: Seq[Attributed[File]],
                  configDetails: Option[ConfigDetails],
                  runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot")): Any = try {
-    configDetails.map { case ConfigDetails(secretRepo, encryptedConfig, output, systemPropertySetter) =>
+    configDetails.map { case ConfigDetails(secretRepo, encryptedConfig, output) =>
       val encryptedConfigFile = new File(secretRepo, encryptedConfig)
       output.map { case ConfigOutput(decryptedOutput, transform) =>
         decryptFile(secretRepo.getAbsolutePath, encryptedConfigFile, decryptedOutput, transform)
@@ -84,6 +125,14 @@ object Runner {
       throw t
   }
 
+  /**
+   * Decrypts a file from the secret repo, transforms it if needed and writes it to a destination file passed.
+   * Usses external executable decrypt-file which should be located in the secrets repository.
+   * @param secretRepo the location of the secrets repository
+   * @param encrypted relative path based on the secretRepo location of a file to be decrypted
+   * @param dest the decrypted file location
+   * @param decryptedTransform a transformation to be applied on the decrypted string before it's written.
+   */
   def decryptFile(secretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
     val decryptFile = s"$secretRepo/decrypt-file"
     Process(s"chmod +x $decryptFile").!!<
@@ -97,6 +146,15 @@ object Runner {
     FileUtils.writeStringToFile(dest, transformedFile)
   }
 
+  /**
+   * Returns a transformation that adds the port configuration and edits the port of the urlProperty.
+   * The urlProperty should be a valid URL
+   * @param servicePort the port property value
+   * @param urlProperty a property key to a URL formatted string that will be set with a new port.
+   * @param newPort the new port to be se to the URL property from above
+   * @param properties the string representation of the configuration file.
+   * @return
+   */
   def setServicePortAndLegacyServicesPort(servicePort: Int, urlProperty: String, newPort: Int)
                                          (properties: String): String =
     setServicePort(servicePort)(updatePropertyPort(urlProperty, newPort)(properties))
@@ -108,7 +166,14 @@ object Runner {
   """.stripMargin
   }
 
-def substituteProp(prop: String, value: String)(properties: String): String =
+  /**
+   * Sets a new value of a property within a string representation of the properties.
+   * @param prop
+   * @param value
+   * @param properties
+   * @return
+   */
+  def substituteProp(prop: String, value: String)(properties: String): String =
     (s"""$prop = "$value"""" :: properties.lines
       .filterNot(_.contains(prop))
       .toList )

@@ -3,6 +3,11 @@ package uk.gov.dvla.vehicles.sandbox
 import sbt.Keys.{libraryDependencies, resolvers}
 import sbt._
 
+/**
+ * Helper methods to define the various microservices projects that a sandbox config might need.
+ * All the defined projects will be preset with the dependencies passed to the project as well as with
+ * some default ivy repositories.
+ */
 object ProjectDefinitions {
   final val VersionGatlingApp = "2.0.0-M4-NAP"
   final val VersionVehiclesGatling = "1.0-SNAPSHOT"
