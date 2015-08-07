@@ -7,7 +7,7 @@ object SandboxSettings {
   lazy val portOffset = settingKey[Int]("The port offset for all the microservices.")
   lazy val acceptanceTests = taskKey[Unit]("A task for running the acceptance tests of the project.")
   lazy val loadTests = taskKey[Unit]("A task for running the load tests of the project.")
-  lazy val runAllMicroservices = taskKey[Unit]("A task for running all the microservices need by the sandbox.")
+  lazy val runAllMicroservices = taskKey[Unit]("A task for running all the microservices needed by the sandbox.")
   lazy val webAppSecrets = settingKey[String]("The path to the application secret within the secrets repository.")
 
   lazy val sandbox = taskKey[Unit]("Runs the whole sandbox for manual testing including microservices, webapp and legacy stubs'")

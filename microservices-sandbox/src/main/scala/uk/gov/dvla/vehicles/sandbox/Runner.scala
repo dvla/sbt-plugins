@@ -4,7 +4,7 @@ import java.io.StringReader
 import java.net.{URL, URLClassLoader}
 import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.FileUtils
-import sbt.Scoped.{Apply4, Apply2, Apply3}
+import sbt.Scoped.{Apply2, Apply3}
 import sbt.{Attributed, Def, File, Task}
 import scala.sys.process.Process
 
@@ -168,9 +168,9 @@ object Runner {
 
   /**
    * Sets a new value of a property within a string representation of the properties.
-   * @param prop
-   * @param value
-   * @param properties
+   * @param prop the property
+   * @param value the property value
+   * @param properties the string representation of the properties
    * @return
    */
   def substituteProp(prop: String, value: String)(properties: String): String =
@@ -182,9 +182,7 @@ object Runner {
   def updatePropertyPort(urlProperty: String, newPort: Int)(properties: String): String = {
     val config = ConfigFactory.parseReader(new StringReader(properties))
     val url = new URL(config.getString(urlProperty))
-
     val newUrl = new URL("http", "localhost", newPort, url.getFile).toString
-
     properties.replace(url.toString, newUrl.toString)
   }
 }

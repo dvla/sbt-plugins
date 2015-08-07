@@ -1,7 +1,12 @@
 package uk.gov.dvla.vehicles.sandbox
 
+import sbt.file
 import sbt.Keys.{libraryDependencies, resolvers}
-import sbt._
+import sbt.ModuleID
+import sbt.Project
+import sbt.Resolver
+import sbt.toGroupID
+import sbt.toRepositoryName
 
 /**
  * Helper methods to define the various microservices projects that a sandbox config might need.

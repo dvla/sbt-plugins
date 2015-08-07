@@ -1,10 +1,20 @@
 package uk.gov.dvla.vehicles.sandbox
 
-import SandboxSettings._
-import Runner._
-import uk.gov.dvla.vehicles.sandbox.Tasks._
 import PrerequisitesCheck.prerequisitesCheck
-import sbt._
+import Runner.runSequentially
+import SandboxSettings.accept
+import SandboxSettings.acceptRemote
+import SandboxSettings.acceptanceTests
+import SandboxSettings.cucumber
+import SandboxSettings.gatling
+import SandboxSettings.loadTests
+import SandboxSettings.sandbox
+import SandboxSettings.sandboxAsync
+import sbt.AutoPlugin
+import uk.gov.dvla.vehicles.sandbox.Tasks.allAcceptanceTests
+import uk.gov.dvla.vehicles.sandbox.Tasks.runAppAndMicroservices
+import uk.gov.dvla.vehicles.sandbox.Tasks.runAppAndMicroservicesAsync
+import uk.gov.dvla.vehicles.sandbox.Tasks.setMicroservicesPortsEnvVars
 
 object Sandbox extends AutoPlugin {
   override def trigger = allRequirements

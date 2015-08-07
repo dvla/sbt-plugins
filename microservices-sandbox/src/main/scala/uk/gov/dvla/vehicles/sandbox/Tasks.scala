@@ -1,10 +1,44 @@
 package uk.gov.dvla.vehicles.sandbox
 
-import sbt._
-import sbt.Keys._
-import Runner._
-import SandboxSettings._
-import ProjectDefinitions._
+import sbt.Compile
+import sbt.Def
+import sbt.File
+import sbt.Keys.baseDirectory
+import sbt.Keys.classDirectory
+import sbt.Keys.fullClasspath
+import sbt.Keys.run
+import sbt.Keys.target
+import sbt.Runtime
+import sbt.Test
+import sbt.ThisProject
+import Runner.ConfigDetails
+import Runner.ConfigOutput
+import Runner.runJavaMain
+import Runner.runProject
+import Runner.runScalaMain
+import Runner.secretRepoLocation
+import Runner.setServicePort
+import Runner.setServicePortAndLegacyServicesPort
+import Runner.substituteProp
+import SandboxSettings.acceptanceTests
+import SandboxSettings.applicationContext
+import SandboxSettings.auditProject
+import SandboxSettings.bruteForceEnabled
+import SandboxSettings.emailServiceProject
+import SandboxSettings.legacyStubsProject
+import SandboxSettings.loadTests
+import SandboxSettings.osAddressLookupProject
+import SandboxSettings.paymentSolveProject
+import SandboxSettings.portOffset
+import SandboxSettings.runAllMicroservices
+import SandboxSettings.vehicleAndKeeperLookupProject
+import SandboxSettings.vehiclesAcquireFulfilProject
+import SandboxSettings.vehiclesDisposeFulfilProject
+import SandboxSettings.vehiclesLookupProject
+import SandboxSettings.vrmAssignEligibilityProject
+import SandboxSettings.vrmAssignFulfilProject
+import SandboxSettings.vrmRetentionEligibilityProject
+import SandboxSettings.vrmRetentionRetainProject
 
 object Tasks {
   private val httpsPort = Def.task(portOffset.value + 443)
@@ -19,7 +53,7 @@ object Tasks {
   private val vrmRetentionRetainPort = Def.task(portOffset.value + 810)
   private val vrmAssignEligibilityPort = Def.task(portOffset.value + 811)
   private val vrmAssignFulfilPort = Def.task(portOffset.value + 812)
-  private val auditPort = Def.task(portOffset.value + 813)
+//  private val auditPort = Def.task(portOffset.value + 813)
   private val emailServicePort = Def.task(portOffset.value + 814)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
@@ -268,7 +302,6 @@ object Tasks {
     run.in(Compile).toTask("").value
   }
 
-
   lazy val runAsync = Def.task {
     runAsyncHttpsEnvVars.value
     runProject(
@@ -291,7 +324,7 @@ object Tasks {
 
   lazy val runAsyncHttpsEnvVars = Def.task {
     val appContext = applicationContext.value match {
-      case context: String if context.isEmpty() => ""
+      case context: String if context.isEmpty => ""
       case context: String => s"/$context"
     }
     sys.props ++= Map(
@@ -324,7 +357,7 @@ object Tasks {
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
       "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
       "emailServiceMicroServiceUrlBase" -> s"http://localhost:${emailServicePort.value}"//,
-    //      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}" // Disabled for now due to it needing to be in scala 2.11 but the webapp is still scala 2.10.
+//      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}" // Disabled for now due to it needing to be in scala 2.11 but the webapp is still scala 2.10.
     )
     if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",

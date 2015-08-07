@@ -14,7 +14,6 @@ object PrerequisitesCheck {
     .orElse(sys.env.get(SecretRepoOfflineFolderKey))
   private final val SecretRepoGitUrl = sys.props.get(SecretRepoGitUrlKey)
     .orElse(sys.env.get(SecretRepoGitUrlKey))
-  private final val GitHost = SecretRepoGitUrl.map(url=> url.replace("git@", "").substring(0, url.indexOf(":") - 4))
 
   lazy val prerequisitesCheck = Def.task {
     validatePrerequisites()
@@ -43,50 +42,83 @@ object PrerequisitesCheck {
   }
 
   private def validatePrerequisites() {
-    SecretRepoOfflineFolder.fold {
+    def validateGitIsInstalled() = {
       print(s"${scala.Console.YELLOW}Verifying git is installed...${scala.Console.RESET}")
       if (Process("git --version").! != 0) {
         println(s"${scala.Console.RED}FAILED.")
         println(s"You don't have git installed. Please install git and try again${scala.Console.RESET}")
         throw new Exception("You don't have git installed. Please install git and try again")
       }
+    }
 
-      print(s"${scala.Console.YELLOW}Verifying $SecretRepoGitUrlKey is passed ...${scala.Console.RESET}")
-      SecretRepoGitUrl map(secret => println(s"done set to $secret")) orElse {
+    def validateSecretRepoGitUrlKey() = {
+      print(s"${scala.Console.YELLOW}Verifying $SecretRepoGitUrlKey is passed...${scala.Console.RESET}")
+      SecretRepoGitUrl.fold {
         println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
-        println(s"""${scala.Console.RED}"$SecretRepoGitUrlKey" not set. Please set it either as jvm arg of sbt """ +
-          s""" "-D$SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'"""" +
-          s" or export it in the environment with export $SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'" +
-          s" ${scala.Console.RESET}")
+        println(s"""${scala.Console.RED}"$SecretRepoGitUrlKey" not set. Please set it either as jvm arg of sbt """
+          + s""" "-D$SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'""""
+          + s" or export it in the environment with export $SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'"
+          + s" ${scala.Console.RESET}")
         throw new Exception(s""" There is no "$SecretRepoGitUrlKey" set neither as env variable nor as JVM property """)
-      }
+      } { secret => println(s"done set to $secret") }
+    }
 
-      print(s"${scala.Console.YELLOW}Verifying there is ssh access to ${GitHost.get} ...${scala.Console.RESET}")
-      if (Process(s"ssh -T git@${GitHost.get}").! != 0) {
+    def validateCanSshToGitHost() = {
+      val hostPrefix = "git@"
+      // git@gitlab.preview-dvla.co.uk:dvla/secret-vehicles-online.git -> gitlab.preview-dvla.co.uk
+      val gitHost: Option[String] =
+        SecretRepoGitUrl.map(url=> url.replace(hostPrefix, "").substring(0, url.indexOf(":") - hostPrefix.length))
+
+      print(s"${scala.Console.YELLOW}Verifying there is ssh access to ${gitHost.get}...${scala.Console.RESET}")
+      if (Process(s"ssh -T git@${gitHost.get}").! != 0) {
         println(s"${scala.Console.RED}FAILED.")
-        println(s"Cannot connect to git@${GitHost.get}. Please check your ssh connection to ${GitHost.get}. " +
-          s"You might need to import your public key to ${GitHost.get}${scala.Console.RESET}")
-        throw new Exception(s"Cannot connect to git@${GitHost.get}. Please check your ssh connection to ${GitHost.get}.")
+        println(s"Cannot connect to git@${gitHost.get}. Please check your ssh connection to ${gitHost.get}. "
+          + s"You might need to import your public key to ${gitHost.get}${scala.Console.RESET}")
+        throw new Exception(s"Cannot connect to git@${gitHost.get}. Please check your ssh connection to ${gitHost.get}.")
       }
-    } { secretRepoOfflineFolder =>
-      println(s"${scala.Console.YELLOW}There is an offline folder $SecretRepoOfflineFolderKey=$secretRepoOfflineFolder" +
-        s" defined to be used a secret repo.${scala.Console.RESET}")
-      println(s"${scala.Console.YELLOW}Verifying that $secretRepoOfflineFolder exists.${scala.Console.RESET}")
+    }
+
+    def verifySecretRepoOfflineFolder(secretRepoOfflineFolder: String) = {
+      println(s"${scala.Console.YELLOW}There is an offline folder $SecretRepoOfflineFolderKey=$secretRepoOfflineFolder"
+        + s" defined to be used as a secret repo.${scala.Console.RESET}")
+      print(s"${scala.Console.YELLOW}Verifying that $secretRepoOfflineFolder exists...${scala.Console.RESET}")
+
       if (!new File(secretRepoOfflineFolder).exists()) {
         println(s"${scala.Console.RED}FAILED.")
         println(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist${scala.Console.RESET}")
         throw new Exception(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist")
+      } else {
+        println("done")
       }
     }
 
-    print(s"${scala.Console.YELLOW}Verifying $secretProperty is passed ...${scala.Console.RESET}")
-    decryptPassword map(secret => println("done")) orElse {
-      println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
-      println(s"""${scala.Console.RED}"$secretProperty" not set. Please set it either as jvm arg of sbt """ +
-        s""" "-D$secretProperty='secret'"""" +
-        s" or export it in the environment with export $secretProperty='some secret prop' ${scala.Console.RESET}")
-      throw new Exception(s""" There is no "$secretProperty" set neither as env variable nor as JVM property """)
+    def validateGitDecryptPassword() = {
+      print(s"${scala.Console.YELLOW}Verifying $secretProperty is set...${scala.Console.RESET}")
+      decryptPassword.fold {
+        println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
+        println(s"""${scala.Console.RED}"$secretProperty" not set. Please set it either as jvm arg of sbt """ +
+          s""" "-D$secretProperty='secret'"""" +
+          s" or export it in the environment with export $secretProperty='some secret prop' ${scala.Console.RESET}")
+        throw new Exception(s""" There is no "$secretProperty" set neither as env variable nor as JVM property """)
+      } { secret => println("done") }
     }
+
+    //TODO: remove this line:
+    println(s"${scala.Console.RED}You are running Ian's test version of the sandbox!!!!!${scala.Console.RESET}")
+    SecretRepoOfflineFolder.fold {
+      // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
+      // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
+      // that will allow us to do this
+      println(s"${scala.Console.YELLOW}$SecretRepoOfflineFolderKey has not been set so we will now verify we can " +
+        s"connect to the Git secret repo for later cloning...${scala.Console.RESET}")
+      validateGitIsInstalled()
+      validateSecretRepoGitUrlKey()
+      validateCanSshToGitHost()
+    } { secretRepoOfflineFolder =>
+      // Handles the case when the secretRepoOfflineFolder has been specified
+      verifySecretRepoOfflineFolder(secretRepoOfflineFolder)
+    }
+    validateGitDecryptPassword()
   }
 
   def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, secretRepo: File): Unit = {
