@@ -90,7 +90,7 @@ object Runner {
   }
 
   /**
-   * Details used to extract the typesefe configuration file out of the secrets repository
+   * Details used to extract the typesafe configuration file out of the secrets repository
    * @param secretRepo the location of the temp secret repo
    * @param encryptedConfig the path to the encrypted configuration that needs to be decrypted
    * @param output the decrypted file configuration along with some transformation e.g. adding extra properties.
@@ -108,6 +108,13 @@ object Runner {
    */
   case class ConfigOutput(decryptedOutput: File, transform: String => String = a => a)
 
+  /**
+   * TODO: provide a description of this method
+   * @param prjClassPath
+   * @param configDetails
+   * @param runMainMethod
+   * @return
+   */
   def runProject(prjClassPath: Seq[Attributed[File]],
                  configDetails: Option[ConfigDetails],
                  runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot")): Any = try {
@@ -132,11 +139,11 @@ object Runner {
 
   /**
    * Decrypts a file from the secret repo, transforms it if needed and writes it to a destination file passed.
-   * Usses external executable decrypt-file which should be located in the secrets repository.
+   * Uses external executable decrypt-file bash script which should be located in the secrets repository.
    * @param sandboxSecretRepo the location of the secrets repository within the target directory
    * @param encrypted relative path based on the sandbox secretRepo location of a file to be decrypted
    * @param dest the decrypted file location
-   * @param decryptedTransform a transformation to be applied on the decrypted string before it's written.
+   * @param decryptedTransform a transformation to be applied to the decrypted string before it's written.
    */
   def decryptFile(sandboxSecretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
     val decryptFileBashScript = s"$sandboxSecretRepo/decrypt-file"
