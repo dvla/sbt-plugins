@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
 import sbt.{Attributed, Def, File, Task}
 import scala.sys.process.Process
+import scala.util.Properties.lineSeparator
 
 object Runner {
   val secretProperty = "DECRYPT_PASSWORD"
@@ -188,12 +189,11 @@ object Runner {
    * @param properties the existing properties
    * @return an updated set of properties that now includes the service port at the end
    */
-  def setServicePort(servicePort: Int)(properties: String): String = {
+  def setServicePort(servicePort: Int)(properties: String): String =
     s"""
        |$properties
        |port = $servicePort
     """.stripMargin
-  }
 
   /**
    * Sets a new value of a property within a string representation of the properties.
@@ -208,5 +208,5 @@ object Runner {
     (s"""$prop = "$value"""" :: properties.lines
       .filterNot(_.contains(prop))
       .toList )
-      .mkString(util.Properties.lineSeparator)
+      .mkString(lineSeparator)
 }
