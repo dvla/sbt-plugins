@@ -16,29 +16,39 @@ object PrerequisitesCheck {
     .orElse(sys.env.get(SecretRepoGitUrlKey))
 
   lazy val prerequisitesCheck = Def.task {
+    def updateSecretVehiclesOnline(secretRepo: File) {
+      SecretRepoOfflineFolder.fold {
+        // SecretRepoOfflineFolder has not been specified by the developer
+        val secretRepoLocalPath = secretRepo.getAbsolutePath
+
+        if (new File(secretRepo, ".git").exists()) {
+          val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
+          // If we find the .git directory inside the secretRepo then we just pull the master branch
+          println(Process(s"git $gitOptions pull origin master").!!<)
+        } else
+          // Otherwise we need to do a fresh git clone
+          println(Process(s"git clone ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
+      } { secretRepoOfflineFolder =>
+        // SecretRepoOfflineFolder has been specified by the developer so delete the
+        // version inside the target directory and replace it with the version specified
+        // by the secretRepoOfflineFolder
+        if (secretRepo.exists()) IO.delete(secretRepo)
+        secretRepo.mkdirs()
+        FileUtils.copyDirectory(new File(secretRepoOfflineFolder), secretRepo)
+      }
+    }
+
     validatePrerequisites()
     updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
     decryptWebAppSecrets(
+      // Defined in the web app that is using the sandbox eg. ui/dev/vehiclesOnline.conf.enc
+      // in dispose: SandboxSettings.webAppSecrets := "ui/dev/vehiclesOnline.conf.enc"
       webAppSecrets.value,
+      // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
       baseDirectory.in(ThisProject).value,
-      secretRepoLocation(target.in(ThisProject).value)
+      // The location of the secret repo in the target directory eg. /Users/ianstainer/dev/dvla/vehicles-online/target/secretRepo
+      secretRepoLocation(target.in(ThisProject).value) //
     )
-  }
-
-  private def updateSecretVehiclesOnline(secretRepo: File) {
-    SecretRepoOfflineFolder.fold {
-      val secretRepoLocalPath = secretRepo.getAbsolutePath
-      val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
-
-      if (new File(secretRepo, ".git").exists())
-        println(Process(s"git $gitOptions pull origin master").!!<)
-      else
-        println(Process(s"git clone ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
-    } { secretRepoOfflineFolder =>
-      if (secretRepo.exists()) IO.delete(secretRepo)
-      secretRepo.mkdirs()
-      FileUtils.copyDirectory(new File(secretRepoOfflineFolder), secretRepo)
-    }
   }
 
   private def validatePrerequisites() {
@@ -121,13 +131,23 @@ object PrerequisitesCheck {
     validateGitDecryptPassword()
   }
 
-  def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, secretRepo: File): Unit = {
+  // If the unencrypted version of the web app's secrets file is missing in the conf directory this
+  // method creates it. This means that if you need to update your unencrypted secrets to the latest
+  // version just delete the version in the conf folder and run the sandbox. However, this does not
+  // create it as a symbolic link back to the unencrypted file in the secrets repo
+  private def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, sandboxSecretRepo: File): Unit = {
     val nonEncryptedFileName = encryptedFileName.substring(0, encryptedFileName.length - ".enc".length)
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
 
     if (!targetFile.getCanonicalFile.exists()) {
-      println(s"${scala.Console.YELLOW}Decrypting the secrets to $targetFile${scala.Console.RESET}")
-      decryptFile(secretRepo.getAbsolutePath, new File(secretRepo, encryptedFileName), targetFile, a => a)
+      print(s"${scala.Console.YELLOW}Decrypting the secrets to $targetFile...${scala.Console.RESET}")
+      val doNothingTransformation: (String) => String = a => a
+      decryptFile(sandboxSecretRepo.getAbsolutePath,
+        new File(sandboxSecretRepo, encryptedFileName),
+        targetFile,
+        doNothingTransformation
+      )
+      println("done")
     }
   }
 }

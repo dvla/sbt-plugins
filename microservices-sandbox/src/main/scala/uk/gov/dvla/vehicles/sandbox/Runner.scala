@@ -32,11 +32,16 @@ object Runner {
   def runSequentially[A, B, C](a: ITask[A], b: ITask[B], c: ITask[C]) =
     new Apply3((a, b, c)).apply((a, b, c) => a.flatMap(x => b.flatMap(x => c)))
 
+  /**
+   * Returns a File object that points to the secretRepo sub directory in the given target folder
+   * @param targetFolder the target folder of a web app tha is using the sandbox plugin
+   * @return a File object that points to the secretRepo sub directory in the given target folder
+   */
   def secretRepoLocation(targetFolder: File): File =
     new File(targetFolder, "secretRepo")
 
   /**
-   * Executes a piece of code with the passed class loader set a a context class loader
+   * Executes a piece of code with the passed class loader set as a context class loader
    * @param classLoader the class loader to be used as a context class loader
    * @param code to be executed
    */
@@ -99,7 +104,7 @@ object Runner {
    * Configuration about where to write a decrypted configuration along with an optional transform over it.
    * @param decryptedOutput the file to be written after decrypting a configuration file from secrets.
    * @param transform a transform to apply over the decrypted file. Could be used to modify existing props, add new
-   *                  properties or delete properties.
+   *                  properties or delete properties. Note that the default implementation is to do nothing
    */
   case class ConfigOutput(decryptedOutput: File, transform: String => String = a => a)
 
@@ -128,21 +133,23 @@ object Runner {
   /**
    * Decrypts a file from the secret repo, transforms it if needed and writes it to a destination file passed.
    * Usses external executable decrypt-file which should be located in the secrets repository.
-   * @param secretRepo the location of the secrets repository
-   * @param encrypted relative path based on the secretRepo location of a file to be decrypted
+   * @param sandboxSecretRepo the location of the secrets repository within the target directory
+   * @param encrypted relative path based on the sandbox secretRepo location of a file to be decrypted
    * @param dest the decrypted file location
    * @param decryptedTransform a transformation to be applied on the decrypted string before it's written.
    */
-  def decryptFile(secretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
-    val decryptFile = s"$secretRepo/decrypt-file"
-    Process(s"chmod +x $decryptFile").!!<
+  def decryptFile(sandboxSecretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
+    val decryptFileBashScript = s"$sandboxSecretRepo/decrypt-file"
+    Process(s"chmod +x $decryptFileBashScript").!!< // Make the bash script executable
     dest.getParentFile.mkdirs()
     if (!encrypted.exists()) throw new Exception(s"File to be decrypted ${encrypted.getAbsolutePath} doesn't exist!")
-    val decryptCommand = s"$decryptFile ${encrypted.getAbsolutePath} ${dest.getAbsolutePath} ${decryptPassword.get}"
+    val decryptCommand = s"$decryptFileBashScript ${encrypted.getAbsolutePath} ${dest.getAbsolutePath} ${decryptPassword.get}"
 
     Process(decryptCommand).!!<
 
+    // Apply the transformation function to the contents of the decrypted file
     val transformedFile = decryptedTransform(FileUtils.readFileToString(dest))
+    // Replace the contents with the new contents after they have been through the transformation
     FileUtils.writeStringToFile(dest, transformedFile)
   }
 
@@ -156,18 +163,35 @@ object Runner {
    * @return
    */
   def setServicePortAndLegacyServicesPort(servicePort: Int, urlProperty: String, newPort: Int)
-                                         (properties: String): String =
-    setServicePort(servicePort)(updatePropertyPort(urlProperty, newPort)(properties))
+                                         (properties: String): String = {
 
+    def updatePropertyPort(urlProperty: String, newPort: Int)(properties: String): String = {
+      val config = ConfigFactory.parseReader(new StringReader(properties))
+      val url = new URL(config.getString(urlProperty))
+      val newUrl = new URL("http", "localhost", newPort, url.getFile).toString
+      properties.replace(url.toString, newUrl.toString)
+    }
+
+    setServicePort(servicePort)(updatePropertyPort(urlProperty, newPort)(properties))
+  }
+
+  /**
+   * Adds the service port to the end of the given set of properties in the format port = number
+   * @param servicePort the service port value
+   * @param properties the existing properties
+   * @return an updated set of properties that now includes the service port at the end
+   */
   def setServicePort(servicePort: Int)(properties: String): String = {
     s"""
-  |$properties
-  |port=$servicePort
-  """.stripMargin
+       |$properties
+       |port = $servicePort
+    """.stripMargin
   }
 
   /**
    * Sets a new value of a property within a string representation of the properties.
+   * This is achieved by adding the new property at the start of the old properties and then
+   * removing the old property from the old properties
    * @param prop the property
    * @param value the property value
    * @param properties the string representation of the properties
@@ -178,11 +202,4 @@ object Runner {
       .filterNot(_.contains(prop))
       .toList )
       .mkString(util.Properties.lineSeparator)
-
-  def updatePropertyPort(urlProperty: String, newPort: Int)(properties: String): String = {
-    val config = ConfigFactory.parseReader(new StringReader(properties))
-    val url = new URL(config.getString(urlProperty))
-    val newUrl = new URL("http", "localhost", newPort, url.getFile).toString
-    properties.replace(url.toString, newUrl.toString)
-  }
 }
