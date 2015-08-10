@@ -16,6 +16,13 @@ object PrerequisitesCheck {
     .orElse(sys.env.get(SecretRepoGitUrlKey))
 
   lazy val prerequisitesCheck = Def.task {
+    /**
+     * If SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been specified then delete the version inside the target
+     * directory of the exemplar and replace it with the version specified in the env variable.
+     * Otherwise look in the target directory of the exemplar for the secretRepo directory. If the repo
+     * exists then we pull the master branch otherwise we do a fresh git clone of the repo
+     * @param secretRepo the secretRepo directory in the target directory of the exemplar
+     */
     def updateSecretVehiclesOnline(secretRepo: File) {
       SecretRepoOfflineFolder.fold {
         // SecretRepoOfflineFolder has not been specified by the developer
@@ -140,6 +147,8 @@ object PrerequisitesCheck {
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
 
     if (!targetFile.getCanonicalFile.exists()) {
+      // The unencrypted secrets file is missing in the conf directory so decrypt
+      // the encrypted file that is in target/secretRepo into the conf directory
       print(s"${scala.Console.YELLOW}Decrypting the secrets to $targetFile...${scala.Console.RESET}")
       val doNothingTransformation: (String) => String = a => a
       decryptFile(sandboxSecretRepo.getAbsolutePath,
