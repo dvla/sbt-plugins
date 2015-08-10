@@ -344,6 +344,11 @@ object Tasks {
     )
   }
 
+  /**
+   * Overrides the properties that the exemplars use to connect to their external dependencies (micro services
+   * and only brute force in the legacy stub). Achieved using JVM system properties which supercede anything
+   * explicitly defined in the configuration files
+   */
   val setMicroservicesPortsEnvVars = Def.task {
     sys.props ++= Map(
       "ordnancesurvey.baseUrl" -> s"http://localhost:${osAddressLookupPort.value}",
