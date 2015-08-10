@@ -63,6 +63,7 @@ object Runner {
    */
   def runScalaMain(mainClassName: String, args: Array[String] = Array[String](), method: String = "main")
                   (prjClassLoader: ClassLoader): Any = withClassLoader[Any](prjClassLoader) {
+    // Scala reflection is not thread safe so have to lock here
     this.synchronized {
       import scala.reflect.runtime.universe.{newTermName, runtimeMirror}
       lazy val mirror = runtimeMirror(prjClassLoader)
@@ -110,18 +111,19 @@ object Runner {
   case class ConfigOutput(decryptedOutput: File, transform: String => String = a => a)
 
   /**
-   * TODO: provide a description of this method
-   * @param prjClassPath
-   * @param configDetails
-   * @param runMainMethod
-   * @return
+   * This method will decrypt and transform the secrets, based on the given configDetails. It creates a new class
+   * loader based on the given classpath and will call the given function with that newly created class loader.
+   * The secrets will be within the classpath of the newly created class loader.
+   * @param prjClassPath the physical location of the jar files/folders on the file system (classpath elements)
+   * @param configDetails handles the decrypting/transformation of the secrets
+   * @param runMainMethod the main method to call
    */
   def runProject(prjClassPath: Seq[Attributed[File]],
                  configDetails: Option[ConfigDetails],
-                 runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot")): Any = try {
-    configDetails.map { case ConfigDetails(secretRepo, encryptedConfig, output) =>
+                 runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot")): Unit = try {
+    configDetails.foreach { case ConfigDetails(secretRepo, encryptedConfig, output) =>
       val encryptedConfigFile = new File(secretRepo, encryptedConfig)
-      output.map { case ConfigOutput(decryptedOutput, transform) =>
+      output.foreach { case ConfigOutput(decryptedOutput, transform) =>
         decryptFile(secretRepo.getAbsolutePath, encryptedConfigFile, decryptedOutput, transform)
       }
     }
@@ -151,8 +153,8 @@ object Runner {
     Process(s"chmod +x $decryptFileBashScript").!!< // Make the bash script executable
     dest.getParentFile.mkdirs()
     if (!encrypted.exists()) throw new Exception(s"File to be decrypted ${encrypted.getAbsolutePath} doesn't exist!")
-    val decryptCommand = s"$decryptFileBashScript ${encrypted.getAbsolutePath} ${dest.getAbsolutePath} ${decryptPassword.get}"
 
+    val decryptCommand = s"$decryptFileBashScript ${encrypted.getAbsolutePath} ${dest.getAbsolutePath} ${decryptPassword.get}"
     Process(decryptCommand).!!<
 
     // Apply the transformation function to the contents of the decrypted file
