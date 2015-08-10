@@ -120,8 +120,6 @@ object PrerequisitesCheck {
       } { secret => println("done") }
     }
 
-    //TODO: remove this line:
-    println(s"${scala.Console.RED}You are running Ian's test version of the sandbox!!!!!${scala.Console.RESET}")
     SecretRepoOfflineFolder.fold {
       // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
@@ -139,9 +137,11 @@ object PrerequisitesCheck {
   }
 
   // If the unencrypted version of the web app's secrets file is missing in the conf directory this
-  // method creates it. This means that if you need to update your unencrypted secrets to the latest
-  // version just delete the version in the conf folder and run the sandbox. However, this does not
-  // create it as a symbolic link back to the unencrypted file in the secrets repo
+  // method creates it. This means that you can checkout an exemplar and run "sbt sandbox"
+  // (after setting up the appropriate environment variables) and everything should work. Alternatively,
+  // if you need to update your unencrypted secrets to the latest version just delete the version in the
+  // conf folder and run the sandbox. However, this does not create it as a symbolic link back to the
+  // unencrypted file in the secrets repo.
   private def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, sandboxSecretRepo: File): Unit = {
     val nonEncryptedFileName = encryptedFileName.substring(0, encryptedFileName.length - ".enc".length)
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
