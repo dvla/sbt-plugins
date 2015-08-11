@@ -5,7 +5,7 @@ import java.io.StringReader
 import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
-import sbt.{Attributed, Def, File, Task}
+import sbt.{Attributed, Def, File, IO, Task}
 import scala.sys.process.Process
 import scala.util.Properties.lineSeparator
 
@@ -160,8 +160,7 @@ object Runner {
       this.synchronized {
         print(s"${scala.Console.YELLOW}$unencryptedFileName exists in the sandbox secret repo so will " +
           s"copy it to $destInTargetDir...${scala.Console.RESET}")
-        val copyCommand = s"cp $unencryptedFilePath ${dest.getAbsolutePath}"
-        Process(copyCommand).!!<
+        IO.copyFile(new File(unencryptedFilePath), dest)
         println("done")
       }
     } else {

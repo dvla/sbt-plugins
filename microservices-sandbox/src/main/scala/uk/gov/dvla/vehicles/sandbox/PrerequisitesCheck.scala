@@ -150,11 +150,11 @@ object PrerequisitesCheck {
       // The unencrypted secrets file is missing in the conf directory so decrypt
       // the encrypted file that is in target/secretRepo into the conf directory
       print(s"${scala.Console.YELLOW}Decrypting the secrets to $targetFile...${scala.Console.RESET}")
-      val doNothingTransformation: (String) => String = a => a
+      val noop: (String) => String = a => a
       decryptFile(sandboxSecretRepo.getAbsolutePath,
         new File(sandboxSecretRepo, encryptedFileName),
         targetFile,
-        doNothingTransformation
+        noop
       )
       println("done")
     }
