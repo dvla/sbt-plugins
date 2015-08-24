@@ -1,7 +1,7 @@
 package uk.gov.dvla.vehicles.sandbox
 
 import sbt.file
-import sbt.Keys.{libraryDependencies, resolvers}
+import sbt.Keys.{libraryDependencies, resolvers, scalaVersion}
 import sbt.ModuleID
 import sbt.Project
 import sbt.Resolver
@@ -68,8 +68,9 @@ object ProjectDefinitions {
   def emailService(version: String) =
     sandProject("email-service", "dvla" %% "email-service" % version)
 
-  def audit(version: String) =
+  def audit(version: String, scalaVersionStr: String = "2.11.7") =
     sandProject("audit", "dvla" % "audit_2.11" % version)
+      .settings(scalaVersion := scalaVersionStr)
 
   def legacyStubs(version: String) = sandProject(
     name = "legacy-stubs",

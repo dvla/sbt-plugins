@@ -117,10 +117,13 @@ object Runner {
    * @param prjClassPath the physical location of the jar files/folders on the file system (classpath elements)
    * @param configDetails handles the decrypting/transformation of the secrets
    * @param runMainMethod the main method to call
+   * @param parentClassLoader the ClassLoader to be used as a parent of the newly created ClassLoader
+   *                          defined by @prjClassPath
    */
   def runProject(prjClassPath: Seq[Attributed[File]],
                  configDetails: Option[ConfigDetails],
-                 runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot")): Unit = try {
+                 runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot"),
+                 parentClassLoader: ClassLoader =  ClassLoader.getSystemClassLoader.getParent): Unit = try {
     configDetails.foreach { case ConfigDetails(secretRepo, encryptedConfig, output) =>
       val encryptedConfigFile = new File(secretRepo, encryptedConfig)
       output.foreach { case ConfigOutput(decryptedOutput, transform) =>
@@ -128,9 +131,11 @@ object Runner {
       }
     }
 
+
+
     val prjClassloader = new URLClassLoader(
       prjClassPath.map(_.data.toURI.toURL).toArray,
-      getClass.getClassLoader.getParent.getParent
+      parentClassLoader
     )
 
     runMainMethod(prjClassloader)
