@@ -309,7 +309,6 @@ object Tasks {
 
   lazy val runAsync = Def.task {
     runAsyncHttpsEnvVars.value
-    println(fullClasspath.in(Runtime).value.map(_.data.toURI.toURL.toString).sorted.mkString("\n"))
     runProject(
       fullClasspath.in(Test).value,
       None,
