@@ -339,8 +339,8 @@ object Tasks {
       case context: String => s"/$context"
     }
     sys.props ++= Map(
-      "openingTime" -> "0",
-      "closingTime" -> "24",
+      "openingTimeMinOfDay" -> "0",
+      "closingTimeMinOfDay" -> "1440",
       "https.port" -> httpsPort.value.toString,
       "http.port" -> "disabled",
       "jsse.enableSNIExtension" -> "false", // Disable the SNI for testing
