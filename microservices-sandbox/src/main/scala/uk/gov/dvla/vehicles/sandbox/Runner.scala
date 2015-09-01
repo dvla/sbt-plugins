@@ -131,8 +131,6 @@ object Runner {
       }
     }
 
-
-
     val prjClassloader = new URLClassLoader(
       prjClassPath.map(_.data.toURI.toURL).toArray,
       parentClassLoader

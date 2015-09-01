@@ -9,7 +9,6 @@ import sbt.Keys.fullClasspath
 import sbt.Keys.run
 import sbt.Keys.target
 import sbt.Runtime
-import sbt.Test
 import sbt.ThisProject
 import Runner.ConfigDetails
 import Runner.ConfigOutput
@@ -312,9 +311,13 @@ object Tasks {
     runAsyncHttpsEnvVars.value
     println(fullClasspath.in(Runtime).value.map(_.data.toURI.toURL.toString).sorted.mkString("\n"))
     runProject(
-      fullClasspath.in(Test).value,
+      fullClasspath.in(Runtime).value,
       None,
       runScalaMain("play.core.server.NettyServer", Array((baseDirectory in ThisProject).value.getAbsolutePath)),
+      // The Play framework classes are for some reason not part of the Runtime class path of the application.
+      // This is perhaps because they get added to the class path not by putting deps but from the play plugin.
+      // By doing some trial and error it appears the ClassLoader below does contain the play classes, so we are
+      // using it instead of the default Bootstrap ClassLoader
       getClass.getClassLoader.getParent.getParent
     )
     sys.props += "acceptance.test.url" -> s"https://localhost:${httpsPort.value}/sell-to-the-trade/"
