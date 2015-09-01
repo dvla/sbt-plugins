@@ -8,7 +8,7 @@ import sbt.Keys.classDirectory
 import sbt.Keys.fullClasspath
 import sbt.Keys.run
 import sbt.Keys.target
-import sbt.Runtime
+import sbt.{Runtime, Test}
 import sbt.ThisProject
 import Runner.ConfigDetails
 import Runner.ConfigOutput
@@ -311,7 +311,7 @@ object Tasks {
     runAsyncHttpsEnvVars.value
     println(fullClasspath.in(Runtime).value.map(_.data.toURI.toURL.toString).sorted.mkString("\n"))
     runProject(
-      fullClasspath.in(Runtime).value,
+      fullClasspath.in(Test).value,
       None,
       runScalaMain("play.core.server.NettyServer", Array((baseDirectory in ThisProject).value.getAbsolutePath)),
       // The Play framework classes are for some reason not part of the Runtime class path of the application.
