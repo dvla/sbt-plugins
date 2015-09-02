@@ -339,7 +339,7 @@ object Tasks {
     }
     sys.props ++= Map(
       "openingTimeMinOfDay" -> "0",
-      "closingTimeMinOfDay" -> "1440",
+      "closingTimeMinOfDay" -> "1439",
       "https.port" -> httpsPort.value.toString,
       "http.port" -> "disabled",
       "jsse.enableSNIExtension" -> "false", // Disable the SNI for testing
