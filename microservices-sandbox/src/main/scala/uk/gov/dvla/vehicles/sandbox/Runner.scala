@@ -157,12 +157,10 @@ object Runner {
       // Decrypted version of the file already exists in the secret repo so just copy it to the destination
       val unencryptedFileName = unencryptedFilePath
         .substring(unencryptedFilePath.lastIndexOf('/') + 1, unencryptedFilePath.length)
-      val destPath = dest.getAbsolutePath
-      val destInTargetDir = destPath.substring(destPath.indexOf("target"), destPath.length())
       // Need to lock here to match up the print and println as sbt runs different invocations of this method in parallel
       this.synchronized {
         print(s"${scala.Console.YELLOW}$unencryptedFileName exists in the sandbox secret repo so will " +
-          s"copy it to $destInTargetDir...${scala.Console.RESET}")
+          s"copy it to $dest...${scala.Console.RESET}")
         IO.copyFile(new File(unencryptedFilePath), dest)
         println("done")
       }
