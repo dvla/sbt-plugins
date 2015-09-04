@@ -39,8 +39,6 @@ import SandboxSettings.vrmAssignFulfilProject
 import SandboxSettings.vrmRetentionEligibilityProject
 import SandboxSettings.vrmRetentionRetainProject
 
-import scala.util.Properties.lineSeparator
-
 object Tasks {
   private val httpsPort = Def.task(portOffset.value + 443)
   private val osAddressLookupPort = Def.task(portOffset.value + 801)
@@ -267,12 +265,6 @@ object Tasks {
   val auditClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(auditProject.value)}
   val auditClassDir = Def.settingDyn {classDirectory.in(Runtime).in(auditProject.value)}
   lazy val runAudit = Def.task {
-    def setAuditPort(servicePort: Int)(properties: String): String =
-      (s"audit-port = $servicePort" :: properties.lines
-        .filterNot(_.contains("audit-port"))
-        .toList )
-        .mkString(lineSeparator)
-
     runProject(
       auditClassPath.value,
       Some(ConfigDetails(
@@ -280,7 +272,7 @@ object Tasks {
         "ms/dev/audit.conf.enc",
         Some(ConfigOutput(
           new File(auditClassDir.value, "audit.conf"),
-          setAuditPort(auditPort.value)
+          setServicePort(auditPort.value)
         ))
       ))
     )

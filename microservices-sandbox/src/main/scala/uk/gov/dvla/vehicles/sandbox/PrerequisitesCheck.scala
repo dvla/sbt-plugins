@@ -1,8 +1,8 @@
 package uk.gov.dvla.vehicles.sandbox
 
+import org.apache.commons.io.{FilenameUtils, FileUtils}
 import Runner.{decryptFile, decryptPassword, secretProperty, secretRepoLocation}
 import SandboxSettings.webAppSecrets
-import org.apache.commons.io.{FilenameUtils, FileUtils}
 import sbt.Keys.{baseDirectory, target}
 import sbt.{Def, File, IO, ThisProject}
 import scala.sys.process.Process
