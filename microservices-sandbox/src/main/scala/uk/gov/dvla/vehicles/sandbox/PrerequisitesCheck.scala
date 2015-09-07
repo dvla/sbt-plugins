@@ -8,6 +8,7 @@ import sbt.{Def, File, IO, ThisProject}
 import scala.sys.process.Process
 
 object PrerequisitesCheck {
+  private final val GitBranch = "develop"
   private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
   private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
   private final val SecretRepoOfflineFolder = sys.props.get(SecretRepoOfflineFolderKey)
@@ -31,10 +32,10 @@ object PrerequisitesCheck {
         if (new File(secretRepo, ".git").exists()) {
           val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
           // If we find the .git directory inside the secretRepo then we just pull the master branch
-          println(Process(s"git $gitOptions pull origin master").!!<)
+          println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
         } else
           // Otherwise we need to do a fresh git clone
-          println(Process(s"git clone ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
+          println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
       } { secretRepoOfflineFolder =>
         // SecretRepoOfflineFolder has been specified by the developer so delete the
         // version inside the target directory and replace it with the version specified
