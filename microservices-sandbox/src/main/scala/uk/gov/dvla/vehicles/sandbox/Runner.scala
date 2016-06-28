@@ -12,7 +12,7 @@ import scala.util.Properties.lineSeparator
 object Runner {
   val secretProperty = "DECRYPT_PASSWORD"
   val secretProperty2 = "GIT_SECRET_PASSPHRASE"
-  val decryptPassword = sys.props.get(secretProperty)
+  val decryptPassword: Option[String] = sys.props.get(secretProperty)
     .orElse(sys.env.get(secretProperty))
     .orElse(sys.props.get(secretProperty2))
     .orElse(sys.env.get(secretProperty2))
@@ -35,7 +35,7 @@ object Runner {
 
   /**
    * Returns a File object that points to the secretRepo sub directory in the given target folder
-   * @param targetFolder the target folder of a web app tha is using the sandbox plugin
+   * @param targetFolder the target folder of a web app that is using the sandbox plugin
    * @return a File object that points to the secretRepo sub directory in the given target folder
    */
   def secretRepoLocation(targetFolder: File): File =
@@ -92,23 +92,27 @@ object Runner {
   }
 
   /**
-   * Details used to extract the typesafe configuration file out of the secrets repository
-   * @param secretRepo the location of the temp secret repo
-   * @param encryptedConfig the path to the encrypted configuration that needs to be decrypted
-   * @param output the decrypted file configuration along with some transformation e.g. adding extra properties.
-   *               By default there is no transformation applied to the decrypted configuration.
-   */
-  case class ConfigDetails(secretRepo: File,
-                           encryptedConfig: String,
+    * Details used to extract the typesafe configuration file out of the secrets repository
+    *
+    * @param decryptedConfigDir the location of the Ansible decrypted config dir
+    * @param decryptedConfig the path to the decrypted configuration that will have a transformation applied to it
+    * @param output case class that contains the config file that will be transformed along with some transformation
+    *               that will setup the config file for use in the sandbox
+    *               By default no transformation is applied to the decrypted config.
+    */
+  case class ConfigDetails(decryptedConfigDir: File,
+                           decryptedConfig: String,
                            output: Option[ConfigOutput])
 
   /**
-   * Configuration about where to write a decrypted configuration along with an optional transform over it.
-   * @param decryptedOutput the file to be written after decrypting a configuration file from secrets.
-   * @param transform a transform to apply over the decrypted file. Could be used to modify existing props, add new
-   *                  properties or delete properties. Note that the default implementation is to do nothing
-   */
-  case class ConfigOutput(decryptedOutput: File, transform: String => String = a => a)
+    * Configuration about where to write a decrypted configuration along with an optional transform over it.
+    *
+    * @param transformedOutput the file to be written after applying the transformation function.
+    * @param transform transform to apply to the config file so it will work in the sandbox. Could be used
+    *                  to modify existing props, add new properties or delete properties.
+    *                  Note that the default implementation is to do nothing.
+    */
+  case class ConfigOutput(transformedOutput: File, transform: String => String = s => s)
 
   /**
    * This method will decrypt and transform the secrets, based on the given configDetails. It creates a new class
@@ -124,10 +128,11 @@ object Runner {
                  configDetails: Option[ConfigDetails],
                  runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot"),
                  parentClassLoader: ClassLoader =  ClassLoader.getSystemClassLoader.getParent): Unit = try {
-    configDetails.foreach { case ConfigDetails(secretRepo, encryptedConfig, output) =>
-      val encryptedConfigFile = new File(secretRepo, encryptedConfig)
+    configDetails.foreach { case ConfigDetails(decryptedConfigDir, decryptedConfig, output) =>
+      val decryptedConfigFile = new File(decryptedConfigDir, decryptedConfig)
+      println(s"Applying sandbox transformation to $decryptedConfigFile")
       output.foreach { case ConfigOutput(decryptedOutput, transform) =>
-        decryptFile(secretRepo.getAbsolutePath, encryptedConfigFile, decryptedOutput, transform)
+        copyAndTransform(decryptedConfigDir.getAbsolutePath, decryptedConfigFile, decryptedOutput, transform)
       }
     }
 
@@ -141,6 +146,28 @@ object Runner {
     case t: Throwable =>
       t.printStackTrace()
       throw t
+  }
+
+  /**
+    * Takes a file that is in the Ansible config dir, which has already been created by running the appropriate playbook
+    * applies a transformation function to it and writes it to the destination file that is specified.
+    *
+    * @param decryptedConfigDir the location of the Ansible config dir
+    * @param decryptedConfig path to the decrypted config file, which is relative to the decrypted config dir
+    * @param dest the location of the transformed file
+    * @param decryptedTransform a transformation to be applied to the decrypted config string before it's written.
+    */
+  def copyAndTransform(decryptedConfigDir: String, decryptedConfig: File, dest: File, decryptedTransform: String => String) {
+    if (!decryptedConfig.exists()) {
+      throw new Exception(s"The config file does not exist - $decryptedConfig")
+    }
+    // Apply the transformation function to the contents of the decrypted file that the Ansible playbook has created
+    // The decryptedTransform function contains the logic for what to do to the String that is passed to it
+    // in order to transform it. Remember this is may originally have been a curried function whose first argument list
+    // has been supplied so we are now just dealing with a String => String function
+    val transformedFile = decryptedTransform(FileUtils.readFileToString(decryptedConfig))
+    // Replace the contents with the new contents after they have been through the transformation
+    FileUtils.writeStringToFile(dest, transformedFile)
   }
 
   /**

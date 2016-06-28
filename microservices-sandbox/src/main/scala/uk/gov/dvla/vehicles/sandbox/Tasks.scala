@@ -70,8 +70,10 @@ object Tasks {
     runProject(
       osAddressLookupClassPath.value,
       Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/os-address-lookup.conf.enc",
+//        secretRepoLocation((target in ThisProject).value),
+        new File("/opt"),
+//        "ms/dev/os-address-lookup.conf.enc",
+        "os-address-lookup/os-address-lookup.conf",
         Some(ConfigOutput(
           new File(osAddressLookupClassDir.value, "os-address-lookup.conf"),
           properties =>
@@ -86,25 +88,25 @@ object Tasks {
     )
   }
 
-  val vehiclesLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehiclesLookupProject.value)}
-  val vehiclesLookupClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vehiclesLookupProject.value)}
-  lazy val runVehiclesLookup = Def.task {
-    runProject(
-      vehiclesLookupClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vehicles-lookup.conf.enc",
-        Some(ConfigOutput(
-          new File(vehiclesLookupClassDir.value, "vehicles-lookup.conf"),
-          setServicePortAndLegacyServicesPort(
-            vehicleLookupPort.value,
-            "getVehicleDetails.baseurl",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vehiclesLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehiclesLookupProject.value)}
+//  val vehiclesLookupClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vehiclesLookupProject.value)}
+//  lazy val runVehiclesLookup = Def.task {
+//    runProject(
+//      vehiclesLookupClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vehicles-lookup.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vehiclesLookupClassDir.value, "vehicles-lookup.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vehicleLookupPort.value,
+//            "getVehicleDetails.baseurl",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
   val vehicleAndKeeperLookupClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehicleAndKeeperLookupProject.value)}
   val vehicleAndKeeperLookupClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vehicleAndKeeperLookupProject.value)}
@@ -112,8 +114,10 @@ object Tasks {
     runProject(
       vehicleAndKeeperLookupClassPath.value,
       Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vehicle-and-keeper-lookup.conf.enc",
+//        secretRepoLocation((target in ThisProject).value),
+        new File("/opt"),
+//        "ms/dev/vehicle-and-keeper-lookup.conf.enc",
+        "vehicle-and-keeper-lookup/vehicle-and-keeper-lookup.conf",
         Some(ConfigOutput(
           new File(vehicleAndKeeperLookupClassDir.value, "vehicle-and-keeper-lookup.conf"),
           setServicePortAndLegacyServicesPort(
@@ -132,8 +136,10 @@ object Tasks {
     runProject(
       vehiclesDisposeFulfilClassPath.value,
       Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vehicles-dispose-fulfil.conf.enc",
+//        secretRepoLocation((target in ThisProject).value),
+        new File("/opt"),
+//        "ms/dev/vehicles-dispose-fulfil.conf.enc",
+        "vehicles-dispose-fulfil/vehicles-dispose-fulfil.conf",
         Some(ConfigOutput(
           new File(vehiclesDisposeFulfilDir.value, "vehicles-dispose-fulfil.conf"),
           setServicePortAndLegacyServicesPort(
@@ -146,137 +152,137 @@ object Tasks {
     )
   }
 
-  val vehiclesAcquireFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
-  val vehiclesAcquireFulfilDir = Def.settingDyn {classDirectory.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
-  lazy val runVehiclesAcquireFulfil = Def.task {
-    runProject(
-      vehiclesAcquireFulfilClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vehicles-acquire-fulfil.conf.enc",
-        Some(ConfigOutput(
-          new File(vehiclesAcquireFulfilDir.value, "vehicles-acquire-fulfil.conf"),
-          setServicePortAndLegacyServicesPort(
-            vehiclesAcquireFulfilPort.value,
-            "vss.baseurl",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vehiclesAcquireFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
+//  val vehiclesAcquireFulfilDir = Def.settingDyn {classDirectory.in(Runtime).in(vehiclesAcquireFulfilProject.value)}
+//  lazy val runVehiclesAcquireFulfil = Def.task {
+//    runProject(
+//      vehiclesAcquireFulfilClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vehicles-acquire-fulfil.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vehiclesAcquireFulfilDir.value, "vehicles-acquire-fulfil.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vehiclesAcquireFulfilPort.value,
+//            "vss.baseurl",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
-  val paymentSolveClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(paymentSolveProject.value)}
-  val paymentSolveClassDir = Def.settingDyn {classDirectory.in(Runtime).in(paymentSolveProject.value)}
-  lazy val runPaymentSolve = Def.task {
-    runProject(
-      paymentSolveClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/payment-solve.conf.enc",
-        Some(ConfigOutput(
-          new File(paymentSolveClassDir.value, "payment-solve.conf"),
-          setServicePort(paymentSolvePort.value)
-        ))
-      ))
-    )
-  }
+//  val paymentSolveClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(paymentSolveProject.value)}
+//  val paymentSolveClassDir = Def.settingDyn {classDirectory.in(Runtime).in(paymentSolveProject.value)}
+//  lazy val runPaymentSolve = Def.task {
+//    runProject(
+//      paymentSolveClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/payment-solve.conf.enc",
+//        Some(ConfigOutput(
+//          new File(paymentSolveClassDir.value, "payment-solve.conf"),
+//          setServicePort(paymentSolvePort.value)
+//        ))
+//      ))
+//    )
+//  }
 
-  val vrmRetentionEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionEligibilityProject.value)}
-  val vrmRetentionEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionEligibilityProject.value)}
-  lazy val runVrmRetentionEligibility = Def.task {
-    runProject(
-      vrmRetentionEligibilityClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vrm-retention-eligibility.conf.enc",
-        Some(ConfigOutput(
-          new File(vrmRetentionEligibilityClassDir.value, "vrm-retention-eligibility.conf"),
-          setServicePortAndLegacyServicesPort(
-            vrmRetentionEligibilityPort.value,
-            "validateRetain.url",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vrmRetentionEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionEligibilityProject.value)}
+//  val vrmRetentionEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionEligibilityProject.value)}
+//  lazy val runVrmRetentionEligibility = Def.task {
+//    runProject(
+//      vrmRetentionEligibilityClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vrm-retention-eligibility.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vrmRetentionEligibilityClassDir.value, "vrm-retention-eligibility.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vrmRetentionEligibilityPort.value,
+//            "validateRetain.url",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
-  val vrmRetentionRetainClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionRetainProject.value)}
-  val vrmRetentionRetainClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionRetainProject.value)}
-  lazy val runVrmRetentionRetain = Def.task {
-    runProject(
-      vrmRetentionRetainClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vrm-retention-retain.conf.enc",
-        Some(ConfigOutput(
-          new File(vrmRetentionRetainClassDir.value, "vrm-retention-retain.conf"),
-          setServicePortAndLegacyServicesPort(
-            vrmRetentionRetainPort.value,
-            "retain.url",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vrmRetentionRetainClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmRetentionRetainProject.value)}
+//  val vrmRetentionRetainClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmRetentionRetainProject.value)}
+//  lazy val runVrmRetentionRetain = Def.task {
+//    runProject(
+//      vrmRetentionRetainClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vrm-retention-retain.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vrmRetentionRetainClassDir.value, "vrm-retention-retain.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vrmRetentionRetainPort.value,
+//            "retain.url",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
-  val vrmAssignEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignEligibilityProject.value)}
-  val vrmAssignEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignEligibilityProject.value)}
-  lazy val runVrmAssignEligibility = Def.task {
-    runProject(
-      vrmAssignEligibilityClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vrm-assign-eligibility.conf.enc",
-        Some(ConfigOutput(
-          new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
-          setServicePortAndLegacyServicesPort(
-            vrmAssignEligibilityPort.value,
-            "validateAssign.url",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vrmAssignEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignEligibilityProject.value)}
+//  val vrmAssignEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignEligibilityProject.value)}
+//  lazy val runVrmAssignEligibility = Def.task {
+//    runProject(
+//      vrmAssignEligibilityClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vrm-assign-eligibility.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vrmAssignEligibilityPort.value,
+//            "validateAssign.url",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
-  val vrmAssignFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignFulfilProject.value)}
-  val vrmAssignFulfilClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignFulfilProject.value)}
-  lazy val runVrmAssignFulfil = Def.task {
-    runProject(
-      vrmAssignFulfilClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/vrm-assign-fulfil.conf.enc",
-        Some(ConfigOutput(
-          new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
-          setServicePortAndLegacyServicesPort(
-            vrmAssignFulfilPort.value,
-            "assignFulfil.url",
-            legacyServicesStubsPort.value
-          )
-        ))
-      ))
-    )
-  }
+//  val vrmAssignFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignFulfilProject.value)}
+//  val vrmAssignFulfilClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignFulfilProject.value)}
+//  lazy val runVrmAssignFulfil = Def.task {
+//    runProject(
+//      vrmAssignFulfilClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/vrm-assign-fulfil.conf.enc",
+//        Some(ConfigOutput(
+//          new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
+//          setServicePortAndLegacyServicesPort(
+//            vrmAssignFulfilPort.value,
+//            "assignFulfil.url",
+//            legacyServicesStubsPort.value
+//          )
+//        ))
+//      ))
+//    )
+//  }
 
-  val auditClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(auditProject.value)}
-  val auditClassDir = Def.settingDyn {classDirectory.in(Runtime).in(auditProject.value)}
-  lazy val runAudit = Def.task {
-    runProject(
-      auditClassPath.value,
-      Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/audit.conf.enc",
-        Some(ConfigOutput(
-          new File(auditClassDir.value, "audit.conf"),
-          setServicePort(auditPort.value)
-        ))
-      ))
-    )
-  }
+//  val auditClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(auditProject.value)}
+//  val auditClassDir = Def.settingDyn {classDirectory.in(Runtime).in(auditProject.value)}
+//  lazy val runAudit = Def.task {
+//    runProject(
+//      auditClassPath.value,
+//      Some(ConfigDetails(
+//        secretRepoLocation((target in ThisProject).value),
+//        "ms/dev/audit.conf.enc",
+//        Some(ConfigOutput(
+//          new File(auditClassDir.value, "audit.conf"),
+//          setServicePort(auditPort.value)
+//        ))
+//      ))
+//    )
+//  }
 
   val emailServiceClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(emailServiceProject.value)}
   val emailServiceClassDir = Def.settingDyn {classDirectory.in(Runtime).in(emailServiceProject.value)}
@@ -284,8 +290,10 @@ object Tasks {
     runProject(
       emailServiceClassPath.value,
       Some(ConfigDetails(
-        secretRepoLocation((target in ThisProject).value),
-        "ms/dev/email-service.conf.enc",
+//        secretRepoLocation((target in ThisProject).value),
+        new File("/opt"),
+//        "ms/dev/email-service.conf.enc",
+        "email-service/email-service.conf",
         Some(ConfigOutput(
           new File(emailServiceClassDir.value, "email-service.conf"),
           setServicePort(emailServicePort.value)

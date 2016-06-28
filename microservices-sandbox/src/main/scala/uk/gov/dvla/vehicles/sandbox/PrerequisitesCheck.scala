@@ -11,9 +11,9 @@ object PrerequisitesCheck {
   private final val GitBranch = "develop"
   private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
   private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
-  private final val SecretRepoOfflineFolder = sys.props.get(SecretRepoOfflineFolderKey)
+  private final val SecretRepoOfflineFolder: Option[String] = sys.props.get(SecretRepoOfflineFolderKey)
     .orElse(sys.env.get(SecretRepoOfflineFolderKey))
-  private final val SecretRepoGitUrl = sys.props.get(SecretRepoGitUrlKey)
+  private final val SecretRepoGitUrl: Option[String] = sys.props.get(SecretRepoGitUrlKey)
     .orElse(sys.env.get(SecretRepoGitUrlKey))
 
   lazy val prerequisitesCheck = Def.task {
@@ -21,7 +21,7 @@ object PrerequisitesCheck {
      * If SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been specified then delete the version inside the target
      * directory of the exemplar and replace it with the version specified in the env variable.
      * Otherwise look in the target directory of the exemplar for the secretRepo directory. If the repo
-     * exists then we pull the master branch otherwise we do a fresh git clone of the repo
+     * exists then we pull the develop branch otherwise we do a fresh git clone of the repo
      * @param secretRepo the secretRepo directory in the target directory of the exemplar
      */
     def updateSecretVehiclesOnline(secretRepo: File) {
@@ -31,7 +31,7 @@ object PrerequisitesCheck {
 
         if (new File(secretRepo, ".git").exists()) {
           val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
-          // If we find the .git directory inside the secretRepo then we just pull the master branch
+          // If we find the .git directory inside the secretRepo then we just pull the develop branch
           println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
         } else
           // Otherwise we need to do a fresh git clone
@@ -46,8 +46,9 @@ object PrerequisitesCheck {
       }
     }
 
-    validatePrerequisites()
-    updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
+//    validatePrerequisites()
+//    updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
+/*
     decryptWebAppSecrets(
       // Defined in the web app that is using the sandbox eg. ui/dev/vehiclesOnline.conf.enc
       // in dispose: SandboxSettings.webAppSecrets := "ui/dev/vehiclesOnline.conf.enc"
@@ -55,10 +56,27 @@ object PrerequisitesCheck {
       // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
       baseDirectory.in(ThisProject).value,
       // The location of the secret repo in the target directory eg. /Users/ianstainer/dev/dvla/vehicles-online/target/secretRepo
-      secretRepoLocation(target.in(ThisProject).value) //
+      secretRepoLocation(target.in(ThisProject).value)
     )
+*/
   }
 
+  /**
+    * If the SANDBOX_OFFLINE_SECRET_REPO_FOLDER has not been set eg. it is completely missing then the sandbox will
+    * need to connect to Git and clone the repo within the target directory of the web app which is running the
+    * sandbox. In this scenario the following prerequisite checks are performed:
+    * 1. validate the git client is installed
+    * 2. validate SANDBOX_SECRET_REPO_GIT_URL has been set eg. git@gitlab.preview-dvla.co.uk:dvla/secret-vehicles-online.git
+    * 3. validate we can ssh to the git host part of the SANDBOX_SECRET_REPO_GIT_URL
+    * eg. ssh -T git@gitlab.preview-dvla.co.uk
+    *
+    * If the SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been set and points to a previously cloned repo, the following
+    * checks are performed:
+    * 1. validate that the specified folder exists
+    *
+    * In both cases the final check is to verify that either DECRYPT_PASSWORD or GIT_SECRET_PASSPHRASE have been set
+    * which is needed when decrypting encrypted files in the secret repo
+    */
   private def validatePrerequisites() {
     def validateGitIsInstalled() = {
       print(s"${scala.Console.YELLOW}Verifying git is installed...${scala.Console.RESET}")
@@ -141,8 +159,8 @@ object PrerequisitesCheck {
   // method creates it. This means that you can checkout an exemplar and run "sbt sandbox"
   // (after setting up the appropriate environment variables) and everything should work. Alternatively,
   // if you need to update your unencrypted secrets to the latest version just delete the version in the
-  // conf folder and run the sandbox. However, this does not create it as a symbolic link back to the
-  // unencrypted file in the secrets repo.
+  // web app conf folder and run the sandbox. However, this does not create it as a symbolic link back to
+  // the unencrypted file in the secrets repo, which is how it will usually be set up.
   private def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, sandboxSecretRepo: File): Unit = {
     val nonEncryptedFileName = encryptedFileName.substring(0, encryptedFileName.length - ".enc".length)
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
