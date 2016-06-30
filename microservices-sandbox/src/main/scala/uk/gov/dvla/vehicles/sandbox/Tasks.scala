@@ -33,7 +33,6 @@ import SandboxSettings.runAllMicroservices
 import SandboxSettings.vehicleAndKeeperLookupProject
 import SandboxSettings.vehiclesAcquireFulfilProject
 import SandboxSettings.vehiclesDisposeFulfilProject
-import SandboxSettings.vehiclesLookupProject
 import SandboxSettings.vrmAssignEligibilityProject
 import SandboxSettings.vrmAssignFulfilProject
 import SandboxSettings.vrmRetentionEligibilityProject
@@ -217,45 +216,49 @@ object Tasks {
     )
   }
 
-//  val vrmAssignEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignEligibilityProject.value)}
-//  val vrmAssignEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignEligibilityProject.value)}
-//  lazy val runVrmAssignEligibility = Def.task {
-//    runProject(
-//      vrmAssignEligibilityClassPath.value,
-//      Some(ConfigDetails(
+  val vrmAssignEligibilityClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignEligibilityProject.value)}
+  val vrmAssignEligibilityClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignEligibilityProject.value)}
+  lazy val runVrmAssignEligibility = Def.task {
+    runProject(
+      vrmAssignEligibilityClassPath.value,
+      Some(ConfigDetails(
 //        secretRepoLocation((target in ThisProject).value),
+        decryptedConfigRoot,
 //        "ms/dev/vrm-assign-eligibility.conf.enc",
-//        Some(ConfigOutput(
-//          new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
-//          setServicePortAndLegacyServicesPort(
-//            vrmAssignEligibilityPort.value,
-//            "validateAssign.url",
-//            legacyServicesStubsPort.value
-//          )
-//        ))
-//      ))
-//    )
-//  }
+        "vrm-assign-eligibility/vrm-assign-eligibility.conf",
+        Some(ConfigOutput(
+          new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmAssignEligibilityPort.value,
+            "validateAssign.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
 
-//  val vrmAssignFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignFulfilProject.value)}
-//  val vrmAssignFulfilClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignFulfilProject.value)}
-//  lazy val runVrmAssignFulfil = Def.task {
-//    runProject(
-//      vrmAssignFulfilClassPath.value,
-//      Some(ConfigDetails(
+  val vrmAssignFulfilClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(vrmAssignFulfilProject.value)}
+  val vrmAssignFulfilClassDir = Def.settingDyn {classDirectory.in(Runtime).in(vrmAssignFulfilProject.value)}
+  lazy val runVrmAssignFulfil = Def.task {
+    runProject(
+      vrmAssignFulfilClassPath.value,
+      Some(ConfigDetails(
 //        secretRepoLocation((target in ThisProject).value),
+        decryptedConfigRoot,
 //        "ms/dev/vrm-assign-fulfil.conf.enc",
-//        Some(ConfigOutput(
-//          new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
-//          setServicePortAndLegacyServicesPort(
-//            vrmAssignFulfilPort.value,
-//            "assignFulfil.url",
-//            legacyServicesStubsPort.value
-//          )
-//        ))
-//      ))
-//    )
-//  }
+        "vrm-assign-fulfil/vrm-assign-fulfil.conf",
+        Some(ConfigOutput(
+          new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
+          setServicePortAndLegacyServicesPort(
+            vrmAssignFulfilPort.value,
+            "assignFulfil.url",
+            legacyServicesStubsPort.value
+          )
+        ))
+      ))
+    )
+  }
 
   val auditClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(auditProject.value)}
   val auditClassDir = Def.settingDyn {classDirectory.in(Runtime).in(auditProject.value)}
