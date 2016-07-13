@@ -150,7 +150,8 @@ object PrerequisitesCheck {
   private def generateConfigFiles(): Unit = {
     SecretRepoOfflineFolder.fold {
       val applyPlaybookCommand = "./target/secretRepo/gapply -i target/secretRepo/inventory/sandbox target/secretRepo/sandbox.yml -t sandbox"
-      println(s"Now generating the config with the following command: $applyPlaybookCommand")
+      println(s"${scala.Console.YELLOW}" +
+        s"Now generating the config with the following command: $applyPlaybookCommand${scala.Console.RESET}")
       println(Process(applyPlaybookCommand).!!) // Run the playbook
       println("done.")
     } { _ =>
