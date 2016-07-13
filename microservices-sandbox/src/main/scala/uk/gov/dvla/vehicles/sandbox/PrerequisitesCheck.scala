@@ -1,18 +1,21 @@
 package uk.gov.dvla.vehicles.sandbox
 
-import org.apache.commons.io.{FilenameUtils, FileUtils}
-import Runner.{decryptFile, decryptPassword, secretProperty, secretRepoLocation}
+import org.apache.commons.io.FilenameUtils
+import Runner.secretRepoLocation
 import SandboxSettings.webAppSecrets
 import sbt.Keys.{baseDirectory, target}
 import sbt.{Def, File, IO, ThisProject}
 import scala.sys.process.Process
 
 object PrerequisitesCheck {
-  private final val GitBranch = "develop"
+//  private final val GitBranch = "develop"
+  private final val GitBranch = "include_secrets_trunc"
   private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
   private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
+
   private final val SecretRepoOfflineFolder: Option[String] = sys.props.get(SecretRepoOfflineFolderKey)
     .orElse(sys.env.get(SecretRepoOfflineFolderKey))
+
   private final val SecretRepoGitUrl: Option[String] = sys.props.get(SecretRepoGitUrlKey)
     .orElse(sys.env.get(SecretRepoGitUrlKey))
 
@@ -22,8 +25,10 @@ object PrerequisitesCheck {
      * directory of the exemplar and replace it with the version specified in the env variable.
      * Otherwise look in the target directory of the exemplar for the secretRepo directory. If the repo
      * exists then we pull the develop branch otherwise we do a fresh git clone of the repo
-     * @param secretRepo the secretRepo directory in the target directory of the exemplar
+      *
+      * @param secretRepo the secretRepo directory in the target directory of the exemplar
      */
+/*
     def updateSecretVehiclesOnline(secretRepo: File) {
       SecretRepoOfflineFolder.fold {
         // SecretRepoOfflineFolder has not been specified by the developer
@@ -33,21 +38,51 @@ object PrerequisitesCheck {
           val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
           // If we find the .git directory inside the secretRepo then we just pull the develop branch
           println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
-        } else
+        } else {
           // Otherwise we need to do a fresh git clone
+          println(s"Now going to run the following command: git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath")
           println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
+          println("done.")
+        }
       } { secretRepoOfflineFolder =>
+
         // SecretRepoOfflineFolder has been specified by the developer so delete the
         // version inside the target directory and replace it with the version specified
         // by the secretRepoOfflineFolder
-        if (secretRepo.exists()) IO.delete(secretRepo)
-        secretRepo.mkdirs()
-        FileUtils.copyDirectory(new File(secretRepoOfflineFolder), secretRepo)
+//        if (secretRepo.exists()) IO.delete(secretRepo)
+//        secretRepo.mkdirs()
+//        FileUtils.copyDirectory(new File(secretRepoOfflineFolder), secretRepo)
+      }
+    }
+*/
+    def updateSecretVehiclesOnline(secretRepo: File) {
+      if (SecretRepoOfflineFolder.isEmpty) {
+        // SecretRepoOfflineFolder has not been specified by the developer so pull down the latest from git
+        val secretRepoLocalPath = secretRepo.getAbsolutePath
+
+        if (new File(secretRepo, ".git").exists()) {
+          val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
+          // If we find the .git directory inside the secretRepo then we just pull the develop branch
+          println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
+        } else {
+          // Otherwise we need to do a fresh git clone
+          println(s"Now going to run the following command: git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath")
+          println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
+          println("done.")
+        }
       }
     }
 
-//    validatePrerequisites()
-//    updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
+    validatePrerequisites()
+    updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
+    generateConfigFiles()
+    deployWebAppSecrets(
+      // Defined in the web app that is using the sandbox eg. /opt/vehicles-online/conf/vehiclesOnline.conf
+      // in dispose: SandboxSettings.webAppSecrets := "/opt/vehicles-online/conf/vehiclesOnline.conf"
+      webAppSecrets.value,
+      // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
+      baseDirectory.in(ThisProject).value
+    )
 /*
     decryptWebAppSecrets(
       // Defined in the web app that is using the sandbox eg. ui/dev/vehiclesOnline.conf.enc
@@ -59,6 +94,7 @@ object PrerequisitesCheck {
       secretRepoLocation(target.in(ThisProject).value)
     )
 */
+
   }
 
   /**
@@ -117,17 +153,24 @@ object PrerequisitesCheck {
     def verifySecretRepoOfflineFolder(secretRepoOfflineFolder: String) = {
       println(s"${scala.Console.YELLOW}There is an offline folder $SecretRepoOfflineFolderKey=$secretRepoOfflineFolder"
         + s" defined to be used as a secret repo.${scala.Console.RESET}")
-      print(s"${scala.Console.YELLOW}Verifying that $secretRepoOfflineFolder exists...${scala.Console.RESET}")
+      print(s"${scala.Console.YELLOW}Verifying that $secretRepoOfflineFolder exists and is set correctly...${scala.Console.RESET}")
 
-      if (!new File(secretRepoOfflineFolder).exists()) {
-        println(s"${scala.Console.RED}FAILED.")
-        println(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist${scala.Console.RESET}")
-        throw new Exception(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist")
-      } else {
-        println("done")
+      secretRepoOfflineFolder match {
+        case folder if !new File(folder).exists() =>
+          println(s"${scala.Console.RED}FAILED.")
+          println(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist${scala.Console.RESET}")
+          throw new Exception(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist")
+        case folder if folder != "/opt" =>
+          println(s"${scala.Console.RED}FAILED.")
+          println(s"The offline secret repo folder $secretRepoOfflineFolder is not set to /opt${scala.Console.RESET}")
+          val msg = s"The offline secret repo folder is set to $secretRepoOfflineFolder. " +
+            "If you are going to set it, it must be set to /opt"
+          throw new Exception(msg)
+        case _ =>
+          println("done.")
       }
     }
-
+/*
     def validateGitDecryptPassword() = {
       print(s"${scala.Console.YELLOW}Verifying $secretProperty is set...${scala.Console.RESET}")
       decryptPassword.fold {
@@ -138,7 +181,7 @@ object PrerequisitesCheck {
         throw new Exception(s""" There is no "$secretProperty" set neither as env variable nor as JVM property """)
       } { secret => println("done") }
     }
-
+*/
     SecretRepoOfflineFolder.fold {
       // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
@@ -152,7 +195,7 @@ object PrerequisitesCheck {
       // Handles the case when the secretRepoOfflineFolder has been specified
       verifySecretRepoOfflineFolder(secretRepoOfflineFolder)
     }
-    validateGitDecryptPassword()
+//    validateGitDecryptPassword()
   }
 
   // If the unencrypted version of the web app's secrets file is missing in the conf directory this
@@ -161,6 +204,7 @@ object PrerequisitesCheck {
   // if you need to update your unencrypted secrets to the latest version just delete the version in the
   // web app conf folder and run the sandbox. However, this does not create it as a symbolic link back to
   // the unencrypted file in the secrets repo, which is how it will usually be set up.
+/*
   private def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, sandboxSecretRepo: File): Unit = {
     val nonEncryptedFileName = encryptedFileName.substring(0, encryptedFileName.length - ".enc".length)
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
@@ -175,7 +219,36 @@ object PrerequisitesCheck {
         targetFile,
         noop
       )
-      println("done")
+      println("done.")
+    }
+  }
+*/
+  private def generateConfigFiles(): Unit = {
+    SecretRepoOfflineFolder.fold {
+      val applyPlaybookCommand = "./target/secretRepo/gapply -i target/secretRepo/inventory/sandbox target/secretRepo/sandbox.yml -t sandbox"
+      println(s"Now generating the config with the following command: $applyPlaybookCommand")
+      println(Process(applyPlaybookCommand).!!) // Run the playbook
+      println("done.")
+    } { _ =>
+      println(s"${scala.Console.YELLOW}" +
+        s"Skipping the generate config files step because $SecretRepoOfflineFolderKey is set." +
+        s"${scala.Console.RESET}")
+    }
+  }
+
+  private def deployWebAppSecrets(secretsFilename: String, projectBaseDir: File): Unit = {
+    val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(secretsFilename))
+
+    if (!targetFile.getCanonicalFile.exists()) {
+      // The secrets file is missing in the conf directory so copy the generated file that
+      // has been created under the /opt directory into the conf directory
+      print(s"${scala.Console.YELLOW}Copying the web app secrets from $secretsFilename to $targetFile...${scala.Console.RESET}")
+      IO.copyFile(new File(secretsFilename), targetFile)
+      println("done.")
+    } else {
+      println(s"${scala.Console.YELLOW}" +
+        s"Web app secrets file $secretsFilename already exists - skipping deploy web app secrets step." +
+        s"${scala.Console.RESET}")
     }
   }
 }

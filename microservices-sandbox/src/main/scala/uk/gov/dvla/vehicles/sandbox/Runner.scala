@@ -5,8 +5,9 @@ import java.io.StringReader
 import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
-import sbt.{Attributed, Def, File, IO, Task}
-import scala.sys.process.Process
+//import sbt.{Attributed, Def, File, IO, Task}
+import sbt.{Attributed, Def, File, Task}
+//import scala.sys.process.Process
 import scala.util.Properties.lineSeparator
 
 object Runner {
@@ -149,8 +150,9 @@ object Runner {
   }
 
   /**
-    * Takes a file that is in the Ansible config dir, which has already been created by running the appropriate playbook
-    * applies a transformation function to it and writes it to the destination file that is specified.
+    * Takes a file that is in the Ansible generated config dir, which has already been created by running the
+    * appropriate playbook applies a transformation function to it and writes it to the destination file that
+    * is specified.
     *
     * @param decryptedConfigDir the location of the Ansible config dir
     * @param decryptedConfig path to the decrypted config file, which is relative to the decrypted config dir
@@ -168,16 +170,18 @@ object Runner {
     val transformedFile = decryptedTransform(FileUtils.readFileToString(decryptedConfig))
     // Replace the contents with the new contents after they have been through the transformation
     FileUtils.writeStringToFile(dest, transformedFile)
+    println(s"Wrote transformed file contents to $dest")
   }
 
   /**
    * Decrypts a file from the secret repo, transforms it if needed and writes it to a destination file passed.
    * Uses external executable decrypt-file bash script which should be located in the secrets repository.
-   * @param sandboxSecretRepo the location of the secrets repository within the target directory
-   * @param encrypted relative path based on the sandbox secretRepo location of a file to be decrypted
-   * @param dest the decrypted file location
-   * @param decryptedTransform a transformation to be applied to the decrypted string before it's written.
+   * param sandboxSecretRepo the location of the secrets repository within the target directory
+   * param encrypted relative path based on the sandbox secretRepo location of a file to be decrypted
+   * param dest the decrypted file location
+   * param decryptedTransform a transformation to be applied to the decrypted string before it's written.
    */
+/*
   def decryptFile(sandboxSecretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
     val unencryptedFilePath = encrypted.getAbsolutePath.substring(0, encrypted.getAbsolutePath.length - ".enc".length)
     if (new File(unencryptedFilePath).exists()) {
@@ -205,7 +209,7 @@ object Runner {
     // Replace the contents with the new contents after they have been through the transformation
     FileUtils.writeStringToFile(dest, transformedFile)
   }
-
+*/
   /**
    * Returns a transformation that adds the port configuration and edits the port of the urlProperty.
    * The urlProperty should be a valid URL
