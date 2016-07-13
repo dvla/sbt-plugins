@@ -28,33 +28,6 @@ object PrerequisitesCheck {
       *
       * @param secretRepo the secretRepo directory in the target directory of the exemplar
      */
-/*
-    def updateSecretVehiclesOnline(secretRepo: File) {
-      SecretRepoOfflineFolder.fold {
-        // SecretRepoOfflineFolder has not been specified by the developer
-        val secretRepoLocalPath = secretRepo.getAbsolutePath
-
-        if (new File(secretRepo, ".git").exists()) {
-          val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
-          // If we find the .git directory inside the secretRepo then we just pull the develop branch
-          println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
-        } else {
-          // Otherwise we need to do a fresh git clone
-          println(s"Now going to run the following command: git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath")
-          println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
-          println("done.")
-        }
-      } { secretRepoOfflineFolder =>
-
-        // SecretRepoOfflineFolder has been specified by the developer so delete the
-        // version inside the target directory and replace it with the version specified
-        // by the secretRepoOfflineFolder
-//        if (secretRepo.exists()) IO.delete(secretRepo)
-//        secretRepo.mkdirs()
-//        FileUtils.copyDirectory(new File(secretRepoOfflineFolder), secretRepo)
-      }
-    }
-*/
     def updateSecretVehiclesOnline(secretRepo: File) {
       if (SecretRepoOfflineFolder.isEmpty) {
         // SecretRepoOfflineFolder has not been specified by the developer so pull down the latest from git
@@ -83,18 +56,6 @@ object PrerequisitesCheck {
       // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
       baseDirectory.in(ThisProject).value
     )
-/*
-    decryptWebAppSecrets(
-      // Defined in the web app that is using the sandbox eg. ui/dev/vehiclesOnline.conf.enc
-      // in dispose: SandboxSettings.webAppSecrets := "ui/dev/vehiclesOnline.conf.enc"
-      webAppSecrets.value,
-      // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
-      baseDirectory.in(ThisProject).value,
-      // The location of the secret repo in the target directory eg. /Users/ianstainer/dev/dvla/vehicles-online/target/secretRepo
-      secretRepoLocation(target.in(ThisProject).value)
-    )
-*/
-
   }
 
   /**
@@ -170,18 +131,7 @@ object PrerequisitesCheck {
           println("done.")
       }
     }
-/*
-    def validateGitDecryptPassword() = {
-      print(s"${scala.Console.YELLOW}Verifying $secretProperty is set...${scala.Console.RESET}")
-      decryptPassword.fold {
-        println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
-        println(s"""${scala.Console.RED}"$secretProperty" not set. Please set it either as jvm arg of sbt """ +
-          s""" "-D$secretProperty='secret'"""" +
-          s" or export it in the environment with export $secretProperty='some secret prop' ${scala.Console.RESET}")
-        throw new Exception(s""" There is no "$secretProperty" set neither as env variable nor as JVM property """)
-      } { secret => println("done") }
-    }
-*/
+
     SecretRepoOfflineFolder.fold {
       // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
@@ -195,34 +145,8 @@ object PrerequisitesCheck {
       // Handles the case when the secretRepoOfflineFolder has been specified
       verifySecretRepoOfflineFolder(secretRepoOfflineFolder)
     }
-//    validateGitDecryptPassword()
   }
 
-  // If the unencrypted version of the web app's secrets file is missing in the conf directory this
-  // method creates it. This means that you can checkout an exemplar and run "sbt sandbox"
-  // (after setting up the appropriate environment variables) and everything should work. Alternatively,
-  // if you need to update your unencrypted secrets to the latest version just delete the version in the
-  // web app conf folder and run the sandbox. However, this does not create it as a symbolic link back to
-  // the unencrypted file in the secrets repo, which is how it will usually be set up.
-/*
-  private def decryptWebAppSecrets(encryptedFileName: String, projectBaseDir: File, sandboxSecretRepo: File): Unit = {
-    val nonEncryptedFileName = encryptedFileName.substring(0, encryptedFileName.length - ".enc".length)
-    val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(nonEncryptedFileName))
-
-    if (!targetFile.getCanonicalFile.exists()) {
-      // The unencrypted secrets file is missing in the conf directory so decrypt
-      // the encrypted file that is in target/secretRepo into the conf directory
-      print(s"${scala.Console.YELLOW}Decrypting the secrets to $targetFile...${scala.Console.RESET}")
-      val noop: (String) => String = a => a
-      decryptFile(sandboxSecretRepo.getAbsolutePath,
-        new File(sandboxSecretRepo, encryptedFileName),
-        targetFile,
-        noop
-      )
-      println("done.")
-    }
-  }
-*/
   private def generateConfigFiles(): Unit = {
     SecretRepoOfflineFolder.fold {
       val applyPlaybookCommand = "./target/secretRepo/gapply -i target/secretRepo/inventory/sandbox target/secretRepo/sandbox.yml -t sandbox"

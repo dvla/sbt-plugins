@@ -7,7 +7,6 @@ import sbt.Keys.baseDirectory
 import sbt.Keys.classDirectory
 import sbt.Keys.fullClasspath
 import sbt.Keys.run
-import sbt.Keys.target
 import sbt.{Runtime, Test}
 import sbt.ThisProject
 import Runner.ConfigDetails
@@ -15,7 +14,6 @@ import Runner.ConfigOutput
 import Runner.runJavaMain
 import Runner.runProject
 import Runner.runScalaMain
-import Runner.secretRepoLocation
 import Runner.setServicePort
 import Runner.setServicePortAndLegacyServicesPort
 import Runner.substituteProp
@@ -70,9 +68,7 @@ object Tasks {
     runProject(
       osAddressLookupClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/os-address-lookup.conf.enc",
         "os-address-lookup/os-address-lookup.conf",
         Some(ConfigOutput(
           new File(osAddressLookupClassDir.value, "os-address-lookup.conf"),
@@ -94,9 +90,7 @@ object Tasks {
     runProject(
       vehicleAndKeeperLookupClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vehicle-and-keeper-lookup.conf.enc",
         "vehicle-and-keeper-lookup/vehicle-and-keeper-lookup.conf",
         Some(ConfigOutput(
           new File(vehicleAndKeeperLookupClassDir.value, "vehicle-and-keeper-lookup.conf"),
@@ -116,9 +110,7 @@ object Tasks {
     runProject(
       vehiclesDisposeFulfilClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vehicles-dispose-fulfil.conf.enc",
         "vehicles-dispose-fulfil/vehicles-dispose-fulfil.conf",
         Some(ConfigOutput(
           new File(vehiclesDisposeFulfilDir.value, "vehicles-dispose-fulfil.conf"),
@@ -138,9 +130,7 @@ object Tasks {
     runProject(
       vehiclesAcquireFulfilClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vehicles-acquire-fulfil.conf.enc",
         "vehicles-acquire-fulfil/vehicles-acquire-fulfil.conf",
         Some(ConfigOutput(
           new File(vehiclesAcquireFulfilDir.value, "vehicles-acquire-fulfil.conf"),
@@ -160,9 +150,7 @@ object Tasks {
     runProject(
       paymentSolveClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/payment-solve.conf.enc",
         "payment-solve/payment-solve.conf",
         Some(ConfigOutput(
           new File(paymentSolveClassDir.value, "payment-solve.conf"),
@@ -178,9 +166,7 @@ object Tasks {
     runProject(
       vrmRetentionEligibilityClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vrm-retention-eligibility.conf.enc",
         "vrm-retention-eligibility/vrm-retention-eligibility.conf",
         Some(ConfigOutput(
           new File(vrmRetentionEligibilityClassDir.value, "vrm-retention-eligibility.conf"),
@@ -200,9 +186,7 @@ object Tasks {
     runProject(
       vrmRetentionRetainClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vrm-retention-retain.conf.enc",
         "vrm-retention-retain/vrm-retention-retain.conf",
         Some(ConfigOutput(
           new File(vrmRetentionRetainClassDir.value, "vrm-retention-retain.conf"),
@@ -222,9 +206,7 @@ object Tasks {
     runProject(
       vrmAssignEligibilityClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vrm-assign-eligibility.conf.enc",
         "vrm-assign-eligibility/vrm-assign-eligibility.conf",
         Some(ConfigOutput(
           new File(vrmAssignEligibilityClassDir.value, "vrm-assign-eligibility.conf"),
@@ -244,9 +226,7 @@ object Tasks {
     runProject(
       vrmAssignFulfilClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/vrm-assign-fulfil.conf.enc",
         "vrm-assign-fulfil/vrm-assign-fulfil.conf",
         Some(ConfigOutput(
           new File(vrmAssignFulfilClassDir.value, "vrm-assign-fulfil.conf"),
@@ -266,9 +246,7 @@ object Tasks {
     runProject(
       auditClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/audit.conf.enc",
         "audit/audit.conf",
         Some(ConfigOutput(
           new File(auditClassDir.value, "audit.conf"),
@@ -284,9 +262,7 @@ object Tasks {
     runProject(
       emailServiceClassPath.value,
       Some(ConfigDetails(
-//        secretRepoLocation((target in ThisProject).value),
         decryptedConfigRoot,
-//        "ms/dev/email-service.conf.enc",
         "email-service/email-service.conf",
         Some(ConfigOutput(
           new File(emailServiceClassDir.value, "email-service.conf"),

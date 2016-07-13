@@ -5,9 +5,7 @@ import java.io.StringReader
 import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
-//import sbt.{Attributed, Def, File, IO, Task}
 import sbt.{Attributed, Def, File, Task}
-//import scala.sys.process.Process
 import scala.util.Properties.lineSeparator
 
 object Runner {
@@ -173,43 +171,6 @@ object Runner {
     println(s"Wrote transformed file contents to $dest")
   }
 
-  /**
-   * Decrypts a file from the secret repo, transforms it if needed and writes it to a destination file passed.
-   * Uses external executable decrypt-file bash script which should be located in the secrets repository.
-   * param sandboxSecretRepo the location of the secrets repository within the target directory
-   * param encrypted relative path based on the sandbox secretRepo location of a file to be decrypted
-   * param dest the decrypted file location
-   * param decryptedTransform a transformation to be applied to the decrypted string before it's written.
-   */
-/*
-  def decryptFile(sandboxSecretRepo: String, encrypted: File, dest: File, decryptedTransform: String => String) {
-    val unencryptedFilePath = encrypted.getAbsolutePath.substring(0, encrypted.getAbsolutePath.length - ".enc".length)
-    if (new File(unencryptedFilePath).exists()) {
-      // Decrypted version of the file already exists in the secret repo so just copy it to the destination
-      val unencryptedFileName = unencryptedFilePath
-        .substring(unencryptedFilePath.lastIndexOf('/') + 1, unencryptedFilePath.length)
-      // Need to lock here to match up the print and println as sbt runs different invocations of this method in parallel
-      this.synchronized {
-        print(s"${scala.Console.YELLOW}$unencryptedFileName exists in the sandbox secret repo so will " +
-          s"copy it to $dest...${scala.Console.RESET}")
-        IO.copyFile(new File(unencryptedFilePath), dest)
-        println("done")
-      }
-    } else {
-      val decryptFileBashScript = s"$sandboxSecretRepo/decrypt-file"
-      Process(s"chmod +x $decryptFileBashScript").!!< // Make the bash script executable
-      dest.getParentFile.mkdirs()
-      if (!encrypted.exists()) throw new Exception(s"File to be decrypted ${encrypted.getAbsolutePath} doesn't exist!")
-
-      val decryptCommand = s"$decryptFileBashScript ${encrypted.getAbsolutePath} ${dest.getAbsolutePath} ${decryptPassword.get}"
-      Process(decryptCommand).!!<
-    }
-    // Apply the transformation function to the contents of the decrypted/copied file
-    val transformedFile = decryptedTransform(FileUtils.readFileToString(dest))
-    // Replace the contents with the new contents after they have been through the transformation
-    FileUtils.writeStringToFile(dest, transformedFile)
-  }
-*/
   /**
    * Returns a transformation that adds the port configuration and edits the port of the urlProperty.
    * The urlProperty should be a valid URL
