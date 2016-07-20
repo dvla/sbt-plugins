@@ -21,16 +21,17 @@ object PrerequisitesCheck {
     .orElse(sys.env.get(SecretRepoGitUrlKey))
 
   lazy val prerequisitesCheck = Def.task {
+
     /**
-     * If SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been specified then delete the version inside the target
-     * directory of the exemplar and replace it with the version specified in the env variable.
-     * Otherwise look in the target directory of the exemplar for the secretRepo directory. If the repo
-     * exists then we pull the develop branch otherwise we do a fresh git clone of the repo
+      * If SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been specified then we skip the cloning or updating of the
+      * Ansible repository and use the config that should have been previously generated in the /opt directory.
+      * If it has not been set then we will either do a fresh clone of the repository or will perform an update
+      * if it has been previously cloned. In both cases we deal with the branch specified in the GitBranch constant.
       *
       * @param secretRepo the secretRepo directory in the target directory of the exemplar
-     */
+      */
     def updateSecretVehiclesOnline(secretRepo: File) {
-      if (SecretRepoOfflineFolder.isEmpty) {
+      SecretRepoOfflineFolder.fold {
         // SecretRepoOfflineFolder has not been specified by the developer so pull down the latest from git
         val secretRepoLocalPath = secretRepo.getAbsolutePath
 
@@ -44,6 +45,12 @@ object PrerequisitesCheck {
           println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
           println("done.")
         }
+      } { secretRepoOfflineFolder =>
+        // SecretRepoOfflineFolder has been specified by the developer so log that no cloning
+        // or updating of the Ansible repo will happen
+        println(s"${scala.Console.YELLOW}" +
+          s"Skipping cloning or updating of repo because $SecretRepoOfflineFolderKey has been set to $secretRepoOfflineFolder" +
+          s"${scala.Console.RESET}")
       }
     }
 
