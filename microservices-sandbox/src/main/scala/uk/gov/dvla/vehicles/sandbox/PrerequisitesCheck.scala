@@ -133,7 +133,6 @@ object PrerequisitesCheck {
       }
     }
 
-    println(s"SecretRepoOfflineFolder = $SecretRepoOfflineFolder")
     SecretRepoOfflineFolder.fold {
       // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
