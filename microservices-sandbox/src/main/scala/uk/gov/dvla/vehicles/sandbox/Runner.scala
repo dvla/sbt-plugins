@@ -129,7 +129,7 @@ object Runner {
                  parentClassLoader: ClassLoader =  ClassLoader.getSystemClassLoader.getParent): Unit = try {
     configDetails.foreach { case ConfigDetails(decryptedConfigDir, decryptedConfig, output) =>
       val decryptedConfigFile = new File(decryptedConfigDir, decryptedConfig)
-      println(s"Applying sandbox transformation to $decryptedConfigFile")
+      println(s"${scala.Console.YELLOW}Applying sandbox transformation to $decryptedConfigFile${scala.Console.RESET}")
       output.foreach { case ConfigOutput(decryptedOutput, transform) =>
         copyAndTransform(decryptedConfigDir.getAbsolutePath, decryptedConfigFile, decryptedOutput, transform)
       }
@@ -168,7 +168,7 @@ object Runner {
     val transformedFile = decryptedTransform(FileUtils.readFileToString(decryptedConfig))
     // Replace the contents with the new contents after they have been through the transformation
     FileUtils.writeStringToFile(dest, transformedFile)
-    println(s"Wrote transformed file contents to $dest")
+    println(s"${scala.Console.YELLOW}Wrote transformed file contents to $dest${scala.Console.RESET}")
   }
 
   /**

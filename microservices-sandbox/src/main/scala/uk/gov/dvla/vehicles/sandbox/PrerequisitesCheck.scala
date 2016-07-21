@@ -38,10 +38,17 @@ object PrerequisitesCheck {
         if (new File(secretRepo, ".git").exists()) {
           val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
           // If we find the .git directory inside the secretRepo then we just pull the develop branch
+          println(s"${scala.Console.YELLOW}" +
+            "Now going to update existing git repo with the following command: " +
+            s"git $gitOptions pull origin $GitBranch" +
+            s"${scala.Console.RESET}")
           println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
         } else {
           // Otherwise we need to do a fresh git clone
-          println(s"Now going to run the following command: git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath")
+          println(s"${scala.Console.YELLOW}" +
+            "Now going to run a fresh git clone with the following command: " +
+            s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath" +
+            s"${scala.Console.RESET}")
           println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
           println("done.")
         }
