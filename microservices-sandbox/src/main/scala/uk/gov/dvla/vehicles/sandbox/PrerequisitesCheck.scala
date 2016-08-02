@@ -78,7 +78,7 @@ object PrerequisitesCheck {
     * need to connect to Git and clone the repo within the target directory of the web app which is running the
     * sandbox. In this scenario the following prerequisite checks are performed:
     * 1. validate the git client is installed
-    * 2. validate SANDBOX_SECRET_REPO_GIT_URL has been set eg. git@gitlab.preview-dvla.co.uk:dvla/secret-vehicles-online.git
+    * 2. validate SANDBOX_SECRET_REPO_GIT_URL has been set eg. git@gitlab.preview-dvla.co.uk:dvla/ansible-dvla-playbooks.git
     * 3. validate we can ssh to the git host part of the SANDBOX_SECRET_REPO_GIT_URL
     * eg. ssh -T git@gitlab.preview-dvla.co.uk
     *
