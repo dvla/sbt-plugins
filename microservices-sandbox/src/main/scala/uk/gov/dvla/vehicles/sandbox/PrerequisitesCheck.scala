@@ -1,7 +1,7 @@
 package uk.gov.dvla.vehicles.sandbox
 
 import org.apache.commons.io.FilenameUtils
-import Runner.secretRepoLocation
+import Runner.{configLocation, secretRepoLocation}
 import SandboxSettings.webAppSecrets
 import sbt.Keys.{baseDirectory, target}
 import sbt.{Def, File, IO, ThisProject}
@@ -14,7 +14,7 @@ object PrerequisitesCheck {
   private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
   private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
 
-  private final val SecretRepoOfflineFolder: Option[String] = sys.props.get(SecretRepoOfflineFolderKey)
+  final val SecretRepoOfflineFolder: Option[String] = sys.props.get(SecretRepoOfflineFolderKey)
     .orElse(sys.env.get(SecretRepoOfflineFolderKey))
 
   private final val SecretRepoGitUrl: Option[String] = sys.props.get(SecretRepoGitUrlKey)
@@ -65,11 +65,13 @@ object PrerequisitesCheck {
     updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
     generateConfigFiles()
     deployWebAppSecrets(
-      // Defined in the web app that is using the sandbox eg. /opt/vehicles-online/conf/vehiclesOnline.conf
-      // in dispose: SandboxSettings.webAppSecrets := "/opt/vehicles-online/conf/vehiclesOnline.conf"
-      webAppSecrets.value,
+      // Defined in the web app that is using the sandbox eg. vehicles-online/conf/vehiclesOnline.conf
+      // in dispose: SandboxSettings.webAppSecrets := "vehicles-online/conf/vehiclesOnline.conf"
+      secretsFilename = webAppSecrets.value,
+      // Where to find the config files
+      configDir = configLocation((target in ThisProject).value),
       // The base directory of the web app using the sandbox eg. /Users/ianstainer/dev/dvla/vehicles-online
-      baseDirectory.in(ThisProject).value
+      projectBaseDir = baseDirectory.in(ThisProject).value
     )
   }
 
@@ -164,7 +166,7 @@ object PrerequisitesCheck {
 
   private def generateConfigFiles(): Unit = {
     SecretRepoOfflineFolder.fold {
-      val applyPlaybookCommand = "./target/secretRepo/gapply -i target/secretRepo/inventory/sandbox target/secretRepo/sandbox.yml -t sandbox"
+      val applyPlaybookCommand = "./target/secretRepo/gapply -i target/secretRepo/inventory/sandbox target/secretRepo/sandbox.yml -t sandbox -e accept=yes"
       println(s"${scala.Console.YELLOW}" +
         s"Now generating the config with the following command: $applyPlaybookCommand${scala.Console.RESET}")
       println(Process(applyPlaybookCommand).!!) // Run the playbook
@@ -176,14 +178,15 @@ object PrerequisitesCheck {
     }
   }
 
-  private def deployWebAppSecrets(secretsFilename: String, projectBaseDir: File): Unit = {
+  private def deployWebAppSecrets(secretsFilename: String, configDir: File, projectBaseDir: File): Unit = {
     val targetFile = new File(projectBaseDir, "conf/" + FilenameUtils.getName(secretsFilename))
 
     if (!targetFile.getCanonicalFile.exists()) {
-      // The secrets file is missing in the conf directory so copy the generated file that
-      // has been created under the /opt directory into the conf directory
-      print(s"${scala.Console.YELLOW}Copying the web app secrets from $secretsFilename to $targetFile...${scala.Console.RESET}")
-      IO.copyFile(new File(secretsFilename), targetFile)
+      // The secrets file is missing in the web apps conf directory so copy the generated file that
+      // has been created under the opt directory into the conf directory
+      val configFile = new File(configDir, secretsFilename)
+      print(s"${scala.Console.YELLOW}Copying the web app secrets from $configFile to $targetFile...${scala.Console.RESET}")
+      IO.copyFile(configFile, targetFile)
       println("done.")
     } else {
       println(s"${scala.Console.YELLOW}" +

@@ -6,6 +6,7 @@ import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
 import sbt.{Attributed, Def, File, Task}
+import PrerequisitesCheck.SecretRepoOfflineFolder
 import scala.util.Properties.lineSeparator
 
 object Runner {
@@ -39,6 +40,22 @@ object Runner {
    */
   def secretRepoLocation(targetFolder: File): File =
     new File(targetFolder, "secretRepo")
+
+  /**
+    * Returns the directory that contains the micro service and web app configuration for the sandbox
+    * If the SecretRepoOfflineFolder is specified then the sandbox looks for the config in this directory,
+    * which will be /opt.
+    * However, if the SecretRepoOfflineFolder is not specified then the sandbox looks for the config in
+    * the web app target/opt directory.
+    * @param targetFolder the web app target directory
+    * @return the directory that contains the micro service and web app configuration files
+    */
+  def configLocation(targetFolder: File): File =
+    SecretRepoOfflineFolder.fold {
+      new File(targetFolder, "opt")
+    } { secretRepoOfflineFolder =>
+      new File(secretRepoOfflineFolder)
+    }
 
   /**
    * Executes a piece of code with the passed class loader set as a context class loader
