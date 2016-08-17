@@ -349,5 +349,16 @@ object Tasks {
       "bruteForcePrevention.enabled" -> "true",
       "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
     )
+    val sandboxProperties = List("ordnancesurvey.baseUrl", "vehicleLookup.baseUrl",
+      "vehicleAndKeeperLookupMicroServiceUrlBase", "disposeVehicle.baseUrl", "acquireVehicle.baseUrl",
+      "paymentSolveMicroServiceUrlBase", "vrmRetentionEligibilityMicroServiceUrlBase",
+      "vrmRetentionRetainMicroServiceUrlBase", "vrmAssignEligibilityMicroServiceUrlBase",
+      "vrmAssignFulfilMicroServiceUrlBase", "emailServiceMicroServiceUrlBase", "auditMicroServiceUrlBase",
+      "bruteForcePrevention.enabled", "bruteForcePrevention.baseUrl"
+    )
+    println(s"Overriding the web apps's config with the following JVM system properties:")
+    sys.props.foreach { case(key, value) =>
+      if (sandboxProperties.contains(key)) println(s"${scala.Console.YELLOW}$key: $value${scala.Console.RESET}")}
+    println("-- end JVM system properties --")
   }
 }
