@@ -331,28 +331,28 @@ object Tasks {
    */
   val setMicroservicesPortsEnvVars = Def.task {
     sys.props ++= Map(
-      "ordnancesurvey.baseUrl" -> s"http://localhost:${osAddressLookupPort.value}",
-      "vehicleAndKeeperLookupMicroServiceUrlBase" -> s"http://localhost:${vehicleAndKeeperLookupPort.value}",
-      "disposeVehicle.baseUrl" -> s"http://localhost:${vehicleDisposePort.value}",
       "acquireVehicle.baseUrl" -> s"http://localhost:${vehiclesAcquireFulfilPort.value}",
+      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}",
+      "disposeVehicle.baseUrl" -> s"http://localhost:${vehicleDisposePort.value}",
+      "emailServiceMicroServiceUrlBase" -> s"http://localhost:${emailServicePort.value}",
+      "ordnancesurvey.baseUrl" -> s"http://localhost:${osAddressLookupPort.value}",
       "paymentSolveMicroServiceUrlBase" -> s"http://localhost:${paymentSolvePort.value}",
-      "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
-      "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}",
+      "vehicleAndKeeperLookupMicroServiceUrlBase" -> s"http://localhost:${vehicleAndKeeperLookupPort.value}",
       "vrmAssignEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmAssignEligibilityPort.value}",
       "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
-      "emailServiceMicroServiceUrlBase" -> s"http://localhost:${emailServicePort.value}",
-      "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}"
+      "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
+      "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}"
     )
     if (bruteForceEnabled.value) sys.props ++= Map(
       "bruteForcePrevention.enabled" -> "true",
       "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
     )
-    val sandboxProperties = List("ordnancesurvey.baseUrl",
-      "vehicleAndKeeperLookupMicroServiceUrlBase", "disposeVehicle.baseUrl", "acquireVehicle.baseUrl",
-      "paymentSolveMicroServiceUrlBase", "vrmRetentionEligibilityMicroServiceUrlBase",
-      "vrmRetentionRetainMicroServiceUrlBase", "vrmAssignEligibilityMicroServiceUrlBase",
-      "vrmAssignFulfilMicroServiceUrlBase", "emailServiceMicroServiceUrlBase", "auditMicroServiceUrlBase",
-      "bruteForcePrevention.enabled", "bruteForcePrevention.baseUrl"
+    val sandboxProperties = List("acquireVehicle.baseUrl", "auditMicroServiceUrlBase",
+      "bruteForcePrevention.baseUrl", "bruteForcePrevention.enabled", "disposeVehicle.baseUrl",
+      "emailServiceMicroServiceUrlBase", "ordnancesurvey.baseUrl", "paymentSolveMicroServiceUrlBase",
+      "vehicleAndKeeperLookupMicroServiceUrlBase", "vrmAssignEligibilityMicroServiceUrlBase",
+      "vrmAssignFulfilMicroServiceUrlBase", "vrmRetentionEligibilityMicroServiceUrlBase",
+      "vrmRetentionRetainMicroServiceUrlBase"
     )
     println(s"Overriding the web apps's config with the following JVM system properties:")
     sys.props.foreach { case(key, value) =>
