@@ -41,7 +41,6 @@ import SandboxSettings.vrmRetentionRetainProject
 object Tasks {
   private val httpsPort = Def.task(portOffset.value + 443)
   private val osAddressLookupPort = Def.task(portOffset.value + 801)
-  private val vehicleLookupPort = Def.task(portOffset.value + 802)
   private val vehicleDisposePort = Def.task(portOffset.value + 803)
   private val vehiclesAcquireFulfilPort = Def.task(portOffset.value + 804)
   private val legacyServicesStubsPort = Def.task(portOffset.value + 806)
@@ -333,7 +332,6 @@ object Tasks {
   val setMicroservicesPortsEnvVars = Def.task {
     sys.props ++= Map(
       "ordnancesurvey.baseUrl" -> s"http://localhost:${osAddressLookupPort.value}",
-      "vehicleLookup.baseUrl" -> s"http://localhost:${vehicleLookupPort.value}",
       "vehicleAndKeeperLookupMicroServiceUrlBase" -> s"http://localhost:${vehicleAndKeeperLookupPort.value}",
       "disposeVehicle.baseUrl" -> s"http://localhost:${vehicleDisposePort.value}",
       "acquireVehicle.baseUrl" -> s"http://localhost:${vehiclesAcquireFulfilPort.value}",
@@ -349,7 +347,7 @@ object Tasks {
       "bruteForcePrevention.enabled" -> "true",
       "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
     )
-    val sandboxProperties = List("ordnancesurvey.baseUrl", "vehicleLookup.baseUrl",
+    val sandboxProperties = List("ordnancesurvey.baseUrl",
       "vehicleAndKeeperLookupMicroServiceUrlBase", "disposeVehicle.baseUrl", "acquireVehicle.baseUrl",
       "paymentSolveMicroServiceUrlBase", "vrmRetentionEligibilityMicroServiceUrlBase",
       "vrmRetentionRetainMicroServiceUrlBase", "vrmAssignEligibilityMicroServiceUrlBase",

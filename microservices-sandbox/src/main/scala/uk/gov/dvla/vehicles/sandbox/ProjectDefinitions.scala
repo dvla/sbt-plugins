@@ -38,9 +38,6 @@ object ProjectDefinitions {
   def osAddressLookup(version: String) =
     sandProject("os-address-lookup", "dvla" %% "os-address-lookup" % version)
 
-  def vehiclesLookup(version: String) =
-    sandProject("vehicles-lookup", "dvla" %% "vehicles-lookup" % version)
-
   def vehicleAndKeeperLookup(version: String) =
     sandProject("vehicle-and-keeper-lookup", "dvla" %% "vehicle-and-keeper-lookup" % version)
 
