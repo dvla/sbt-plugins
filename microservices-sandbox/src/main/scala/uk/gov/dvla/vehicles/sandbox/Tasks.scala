@@ -14,7 +14,7 @@ import Runner.ConfigDetails
 import Runner.ConfigOutput
 import Runner.runJavaMain
 import Runner.runProject
-import Runner.runScalaMain
+import Runner.runProjectForked
 import Runner.configLocation
 import Runner.setServicePort
 import Runner.setServicePortAndLegacyServicesPort
@@ -39,19 +39,19 @@ import SandboxSettings.vrmRetentionEligibilityProject
 import SandboxSettings.vrmRetentionRetainProject
 
 object Tasks {
-  private val httpsPort = Def.task(portOffset.value + 443)
-  private val osAddressLookupPort = Def.task(portOffset.value + 801)
-  private val vehicleDisposePort = Def.task(portOffset.value + 803)
-  private val vehiclesAcquireFulfilPort = Def.task(portOffset.value + 804)
-  private val legacyServicesStubsPort = Def.task(portOffset.value + 806)
-  private val vehicleAndKeeperLookupPort = Def.task(portOffset.value + 807)
-  private val paymentSolvePort = Def.task(portOffset.value + 808)
-  private val vrmRetentionEligibilityPort = Def.task(portOffset.value + 809)
-  private val vrmRetentionRetainPort = Def.task(portOffset.value + 810)
-  private val vrmAssignEligibilityPort = Def.task(portOffset.value + 811)
-  private val vrmAssignFulfilPort = Def.task(portOffset.value + 812)
-  private val auditPort = Def.task(portOffset.value + 813)
-  private val emailServicePort = Def.task(portOffset.value + 814)
+  private val httpsPort = Def.setting(portOffset.value + 443)
+  private val osAddressLookupPort = Def.setting(portOffset.value + 801)
+  private val vehicleDisposePort = Def.setting(portOffset.value + 803)
+  private val vehiclesAcquireFulfilPort = Def.setting(portOffset.value + 804)
+  private val legacyServicesStubsPort = Def.setting(portOffset.value + 806)
+  private val vehicleAndKeeperLookupPort = Def.setting(portOffset.value + 807)
+  private val paymentSolvePort = Def.setting(portOffset.value + 808)
+  private val vrmRetentionEligibilityPort = Def.setting(portOffset.value + 809)
+  private val vrmRetentionRetainPort = Def.setting(portOffset.value + 810)
+  private val vrmAssignEligibilityPort = Def.setting(portOffset.value + 811)
+  private val vrmAssignFulfilPort = Def.setting(portOffset.value + 812)
+  private val auditPort = Def.setting(portOffset.value + 813)
+  private val emailServicePort = Def.setting(portOffset.value + 814)
 
   val legacyStubsClassPath = Def.taskDyn {fullClasspath.in(Runtime).in(legacyStubsProject.value)}
   lazy val runLegacyStubs = Def.task {
@@ -278,18 +278,26 @@ object Tasks {
   }
 
   lazy val runAsync = Def.task {
-    runAsyncHttpsEnvVars.value
-    runProject(
-      fullClasspath.in(Test).value,
-      None,
-      runScalaMain("play.core.server.NettyServer", Array((baseDirectory in ThisProject).value.getAbsolutePath)),
-      // The Play framework classes are for some reason not part of the Runtime class path of the application.
-      // This is perhaps because they get added to the class path not by putting deps but from the play plugin.
-      // By doing some trial and error it appears the ClassLoader below does contain the play classes, so we are
-      // using it instead of the default Bootstrap ClassLoader
-      getClass.getClassLoader.getParent.getParent
+    val httpsEnvVars = asyncHttpsEnvVars.value
+
+    // Gatling and cucumber run tests against the test.url
+    sys.props ++= httpsEnvVars.filter { case (k, _) => k == "test.url" }
+
+    val options = sbt.ForkOptions(
+      workingDirectory = Some((baseDirectory in ThisProject).value),
+      outputStrategy = sbt.Keys.outputStrategy.value,
+      javaHome = sbt.Keys.javaHome.value,
+      runJVMOptions = sbt.Keys.javaOptions.value ++ (httpsEnvVars ++ microservicesPortsEnvVars.value).map {
+        case (k, v) => s"-D$k=$v"
+      }.toList,
+      connectInput = false
     )
-    sys.props += "acceptance.test.url" -> s"https://localhost:${httpsPort.value}/sell-to-the-trade/"
+
+    runProjectForked(
+      options,
+      fullClasspath.in(Test).value.map(_.data),
+      "play.core.server.NettyServer"
+    )
   }
 
   lazy val runAppAndMicroservicesAsync = Def.task[Unit] {
@@ -302,12 +310,13 @@ object Tasks {
     loadTests.value
   }
 
-  lazy val runAsyncHttpsEnvVars = Def.task {
+  private lazy val asyncHttpsEnvVars = Def.setting {
     val appContext = applicationContext.value match {
       case context: String if context.isEmpty => ""
       case context: String => s"/$context"
     }
-    sys.props ++= Map(
+
+    Map(
       "openingTimeMinOfDay" -> "0",
       "closingTimeMinOfDay" -> "1439",
       "https.port" -> httpsPort.value.toString,
@@ -315,22 +324,17 @@ object Tasks {
       "jsse.enableSNIExtension" -> "false", // Disable the SNI for testing
       "baseUrl" -> s"https://localhost:${httpsPort.value}$appContext",
       "test.url" -> s"https://localhost:${httpsPort.value}$appContext/",
-      "test.remote" -> "true",
-      "bruteForcePrevention.enabled" -> "false"
-    )
-    if (bruteForceEnabled.value) sys.props ++= Map(
-      "bruteForcePrevention.enabled" -> "true",
-      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
+      "test.remote" -> "true"
+    ) ++ (
+      if (bruteForceEnabled.value) Map(
+        "bruteForcePrevention.enabled" -> "true",
+        "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
+      ) else Map("bruteForcePrevention.enabled" -> "false")
     )
   }
 
-  /**
-   * Overrides the properties that the exemplars use to connect to their external dependencies (micro services
-   * and only brute force in the legacy stub). Achieved using JVM system properties which supersede anything
-   * explicitly defined in the configuration files
-   */
-  val setMicroservicesPortsEnvVars = Def.task {
-    sys.props ++= Map(
+  private lazy val microservicesPortsEnvVars = Def.setting {
+    Map(
       "acquireVehicle.baseUrl" -> s"http://localhost:${vehiclesAcquireFulfilPort.value}",
       "auditMicroServiceUrlBase" -> s"http://localhost:${auditPort.value}",
       "disposeVehicle.baseUrl" -> s"http://localhost:${vehicleDisposePort.value}",
@@ -342,11 +346,23 @@ object Tasks {
       "vrmAssignFulfilMicroServiceUrlBase" -> s"http://localhost:${vrmAssignFulfilPort.value}",
       "vrmRetentionEligibilityMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionEligibilityPort.value}",
       "vrmRetentionRetainMicroServiceUrlBase" -> s"http://localhost:${vrmRetentionRetainPort.value}"
+    ) ++ (
+      if (bruteForceEnabled.value) Map(
+        "bruteForcePrevention.enabled" -> "true",
+        "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
+      ) else Map("bruteForcePrevention.enabled" -> "false")
     )
-    if (bruteForceEnabled.value) sys.props ++= Map(
-      "bruteForcePrevention.enabled" -> "true",
-      "bruteForcePrevention.baseUrl" -> s"http://localhost:${legacyServicesStubsPort.value}/demo/services"
-    )
+  }
+
+
+  /**
+   * Overrides the properties that the exemplars use to connect to their external dependencies (micro services
+   * and only brute force in the legacy stub). Achieved using JVM system properties which supersede anything
+   * explicitly defined in the configuration files
+   */
+  val setMicroservicesPortsEnvVars = Def.task {
+    sys.props ++= microservicesPortsEnvVars.value
+
     val sandboxProperties = List("acquireVehicle.baseUrl", "auditMicroServiceUrlBase",
       "bruteForcePrevention.baseUrl", "bruteForcePrevention.enabled", "disposeVehicle.baseUrl",
       "emailServiceMicroServiceUrlBase", "ordnancesurvey.baseUrl", "paymentSolveMicroServiceUrlBase",

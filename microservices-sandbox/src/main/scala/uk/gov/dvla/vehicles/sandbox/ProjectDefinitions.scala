@@ -17,6 +17,8 @@ object ProjectDefinitions {
   final val VersionGatlingApp = "2.0.0-M4-NAP"
   final val VersionVehiclesGatling = "1.0-SNAPSHOT"
 
+  final val scalaVersionStr = "2.11.8"
+
   private val nexus = "http://rep002-01.skyscape.preview-dvla.co.uk:8081/nexus/content/repositories"
   private val projectResolvers = Seq(
     "typesafe repo" at "http://repo.typesafe.com/typesafe/releases",
@@ -35,42 +37,47 @@ object ProjectDefinitions {
       .settings(libraryDependencies ++= deps)
       .settings(resolvers ++= (projectResolvers ++ res))
 
-  def osAddressLookup(version: String) =
-    sandProject("os-address-lookup", "dvla" %% "os-address-lookup" % version)
+  private def microserviceProject(project: String,
+                                  version: String,
+                                  scalaVersionString: String) =
+    sandProject(project, "dvla" %% s"$project" % version)
+      .settings(scalaVersion := scalaVersionString)
 
-  def vehicleAndKeeperLookup(version: String) =
-    sandProject("vehicle-and-keeper-lookup", "dvla" %% "vehicle-and-keeper-lookup" % version)
+  def osAddressLookup(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("os-address-lookup", version, scalaVersionString = scalaVersionStr)
 
-  def vehiclesDisposeFulfil(version: String) =
-    sandProject("vehicles-dispose-fulfil", "dvla" %% "vehicles-dispose-fulfil" % version)
+  def vehicleAndKeeperLookup(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vehicle-and-keeper-lookup", version, scalaVersionString = scalaVersionStr)
 
-  def vehiclesAcquireFulfil(version: String) =
-    sandProject("vehicles-acquire-fulfil", "dvla" %% "vehicles-acquire-fulfil" % version)
+  def vehiclesDisposeFulfil(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vehicles-dispose-fulfil", version, scalaVersionString = scalaVersionStr)
 
-  def paymentSolve(version: String) =
-    sandProject("payment-solve", "dvla" %% "payment-solve" % version)
+  def vehiclesAcquireFulfil(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vehicles-acquire-fulfil", version, scalaVersionString = scalaVersionStr)
 
-  def vrmRetentionEligibility(version: String) =
-    sandProject("vrm-retention-eligibility", "dvla" %% "vrm-retention-eligibility" % version)
+  def paymentSolve(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("payment-solve", version, scalaVersionString = scalaVersionStr)
 
-  def vrmRetentionRetain(version: String) =
-    sandProject("vrm-retention-retain", "dvla" %% "vrm-retention-retain" % version)
+  def vrmRetentionEligibility(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vrm-retention-eligibility", version, scalaVersionString = scalaVersionStr)
 
-  def vrmAssignEligibility(version: String) =
-    sandProject("vrm-assign-eligibility", "dvla" %% "vrm-assign-eligibility" % version)
+  def vrmRetentionRetain(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vrm-retention-retain", version, scalaVersionString = scalaVersionStr)
 
-  def vrmAssignFulfil(version: String) =
-    sandProject("vrm-assign-fulfil", "dvla" %% "vrm-assign-fulfil" % version)
+  def vrmAssignEligibility(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vrm-assign-eligibility", version, scalaVersionString = scalaVersionStr)
 
-  def emailService(version: String) =
-    sandProject("email-service", "dvla" %% "email-service" % version)
+  def vrmAssignFulfil(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("vrm-assign-fulfil", version, scalaVersionString = scalaVersionStr)
 
-  def audit(version: String, scalaVersionStr: String = "2.11.7") =
-    sandProject("audit", "dvla" % "audit_2.11" % version)
-      .settings(scalaVersion := scalaVersionStr)
+  def emailService(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("email-service", version, scalaVersionString = scalaVersionStr)
+
+  def audit(version: String, scalaVersionString: String = scalaVersionStr) =
+    microserviceProject("audit", version, scalaVersionString = scalaVersionStr)
 
   def legacyStubs(version: String) = sandProject(
-    name = "legacy-stubs",
+    "legacy-stubs",
     "dvla-legacy-stub-services" % "legacy-stub-services-service" % version
   )
 

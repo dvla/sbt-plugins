@@ -5,7 +5,7 @@ import java.io.StringReader
 import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
-import sbt.{Attributed, Def, File, Task}
+import sbt.{Attributed, Def, File, ForkOptions, Task}
 import PrerequisitesCheck.SecretRepoOfflineFolder
 import scala.util.Properties.lineSeparator
 
@@ -20,24 +20,25 @@ object Runner {
   type ITask[T]  = Def.Initialize[Task[T]]
 
   /**
-   * Executes two task a and b in a sequence. B will start executing after a has finished.
-   */
+    * Executes two task a and b in a sequence. B will start executing after a has finished.
+    */
   def runSequentially[A, B](a: ITask[A], b: ITask[B]) =
     new Apply2((a, b)).apply((a, b) => a.flatMap(x => b))
 
   /**
-   * Executes three task a and b and c in a sequence.
-   * C will start executing after b has finished.
-   * B will start executing after a has finished.
-   */
+    * Executes three task a and b and c in a sequence.
+    * C will start executing after b has finished.
+    * B will start executing after a has finished.
+    */
   def runSequentially[A, B, C](a: ITask[A], b: ITask[B], c: ITask[C]) =
     new Apply3((a, b, c)).apply((a, b, c) => a.flatMap(x => b.flatMap(x => c)))
 
   /**
-   * Returns a File object that points to the secretRepo sub directory in the given target folder
-   * @param targetFolder the target folder of a web app that is using the sandbox plugin
-   * @return a File object that points to the secretRepo sub directory in the given target folder
-   */
+    * Returns a File object that points to the secretRepo sub directory in the given target folder
+    *
+    * @param targetFolder the target folder of a web app that is using the sandbox plugin
+    * @return a File object that points to the secretRepo sub directory in the given target folder
+    */
   def secretRepoLocation(targetFolder: File): File =
     new File(targetFolder, "secretRepo")
 
@@ -47,6 +48,7 @@ object Runner {
     * which will be /opt.
     * However, if the SecretRepoOfflineFolder is not specified then the sandbox looks for the config in
     * the web app target/opt directory.
+    *
     * @param targetFolder the web app target directory
     * @return the directory that contains the micro service and web app configuration files
     */
@@ -58,10 +60,11 @@ object Runner {
     }
 
   /**
-   * Executes a piece of code with the passed class loader set as a context class loader
-   * @param classLoader the class loader to be used as a context class loader
-   * @param code to be executed
-   */
+    * Executes a piece of code with the passed class loader set as a context class loader
+    *
+    * @param classLoader the class loader to be used as a context class loader
+    * @param code to be executed
+    */
   def withClassLoader[T](classLoader: ClassLoader)(code: => T) {
     val currentContextClassLoader = Thread.currentThread().getContextClassLoader
     Thread.currentThread().setContextClassLoader(classLoader)
@@ -70,13 +73,14 @@ object Runner {
   }
 
   /**
-   * Executes a Scala App class with arguments within the passed class loader.
-   * @param mainClassName the main class full path
-   * @param args the arguments to be passed to the main method
-   * @param method the static method to be executed. The default is "main"
-   * @param prjClassLoader the class loader to be used to instantiate the main class.
-   *                       Will be used as a context class loader as well.
-   */
+    * Executes a Scala App class with arguments within the passed class loader.
+    *
+    * @param mainClassName the main class full path
+    * @param args the arguments to be passed to the main method
+    * @param method the static method to be executed. The default is "main"
+    * @param prjClassLoader the class loader to be used to instantiate the main class.
+    *                       Will be used as a context class loader as well.
+    */
   def runScalaMain(mainClassName: String, args: Array[String] = Array[String](), method: String = "main")
                   (prjClassLoader: ClassLoader): Any = withClassLoader[Any](prjClassLoader) {
     // Scala reflection is not thread safe so have to lock here
@@ -92,15 +96,17 @@ object Runner {
   }
 
   /**
-   * Executes a Java main class with arguments within the passed class loader.
-   * @param mainClassName the main class full path
-   * @param args the arguments to be passed to the main method
-   * @param method the static method to be executed. The default is "main"
-   * @param prjClassLoader the class loader to be used to instantiate the main class.
-   *                       Will be used as a context class loader as well.
-   */
+    * Executes a Java main class with arguments within the passed class loader.
+    *
+    * @param mainClassName the main class full path
+    * @param args the arguments to be passed to the main method
+    * @param method the static method to be executed. The default is "main"
+    * @param prjClassLoader the class loader to be used to instantiate the main class.
+    *                       Will be used as a context class loader as well.
+    */
   def runJavaMain(mainClassName: String, args: Array[String] = Array[String](), method: String = "main")
                  (prjClassLoader: ClassLoader): Any = withClassLoader(prjClassLoader) {
+
     val mainClass = prjClassLoader.loadClass(mainClassName)
     val mainMethod = mainClass.getMethod(method, classOf[Array[String]])
     val mainResult = mainMethod.invoke(null, args)
@@ -131,15 +137,16 @@ object Runner {
   case class ConfigOutput(transformedOutput: File, transform: String => String = s => s)
 
   /**
-   * This method will decrypt and transform the secrets, based on the given configDetails. It creates a new class
-   * loader based on the given classpath and will call the given function with that newly created class loader.
-   * The secrets will be within the classpath of the newly created class loader.
-   * @param prjClassPath the physical location of the jar files/folders on the file system (classpath elements)
-   * @param configDetails handles the decrypting/transformation of the secrets
-   * @param runMainMethod the main method to call
-   * @param parentClassLoader the ClassLoader to be used as a parent of the newly created ClassLoader
-   *                          defined by @prjClassPath
-   */
+    * This method will decrypt and transform the secrets, based on the given configDetails. It creates a new class
+    * loader based on the given classpath and will call the given function with that newly created class loader.
+    * The secrets will be within the classpath of the newly created class loader.
+    *
+    * @param prjClassPath the physical location of the jar files/folders on the file system (classpath elements)
+    * @param configDetails handles the decrypting/transformation of the secrets
+    * @param runMainMethod the main method to call
+    * @param parentClassLoader the ClassLoader to be used as a parent of the newly created ClassLoader
+    *                          defined by @prjClassPath
+    */
   def runProject(prjClassPath: Seq[Attributed[File]],
                  configDetails: Option[ConfigDetails],
                  runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot"),
@@ -158,6 +165,32 @@ object Runner {
     )
 
     runMainMethod(prjClassloader)
+  } catch {
+    case t: Throwable =>
+      t.printStackTrace()
+      throw t
+  }
+
+  /** Run a forked JVM.
+    *
+    * @param config the options to pass to the forked JVM
+    * @param classPath the physical location of the jar files/folders on the file system (classpath elements)
+    * @param mainClass the main class to run
+    */
+  def runProjectForked(config: ForkOptions, classPath: Seq[File], mainClass: String): Unit = try {
+    val scalaOptions = "-classpath" :: sbt.Path.makeString(classPath) :: mainClass :: Nil
+
+    val process = sbt.Fork.java.fork(config, scalaOptions)
+    lazy val shutdownHook = projectShutdownHook(process)
+    Runtime.getRuntime.addShutdownHook(shutdownHook)
+
+    def projectShutdownHook(process: sbt.Process): Thread = {
+      new Thread(new Runnable {
+        def run() {
+          process.destroy()
+        }
+      })
+    }
   } catch {
     case t: Throwable =>
       t.printStackTrace()
@@ -191,6 +224,7 @@ object Runner {
   /**
    * Returns a transformation that adds the port configuration and edits the port of the urlProperty.
    * The urlProperty should be a valid URL
+   *
    * @param servicePort the port property value
    * @param urlProperty a property key to a URL formatted string that will be set with a new port.
    * @param newPort the new port to be se to the URL property from above
@@ -212,6 +246,7 @@ object Runner {
 
   /**
    * Adds the service port to the end of the given set of properties in the format port = number
+   *
    * @param servicePort the service port value
    * @param properties the existing properties
    * @return an updated set of properties that now includes the service port at the end
@@ -226,6 +261,7 @@ object Runner {
    * Sets a new value of a property within a string representation of the properties.
    * This is achieved by adding the new property at the start of the old properties and then
    * removing the old property from the old properties
+ *
    * @param prop the property
    * @param value the property value
    * @param properties the string representation of the properties

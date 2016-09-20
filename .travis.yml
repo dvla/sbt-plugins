@@ -3,7 +3,7 @@ after_success:
 - sbt bintrayCredentials
 - sbt publish
 scala:
-- 2.10.4
+- 2.10.6
 jdk:
 - oraclejdk7
 matrix:
