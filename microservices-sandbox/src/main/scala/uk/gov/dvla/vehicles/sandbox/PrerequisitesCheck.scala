@@ -8,9 +8,7 @@ import sbt.{Def, File, IO, ThisProject}
 import scala.sys.process.Process
 
 object PrerequisitesCheck {
-//  private final val GitBranch = "develop"
-  // TODO change this back to develop branch once everything is merged
-  private final val GitBranch = "include_secrets"
+  private final val GitBranch = "develop"
   private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
   private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
 
