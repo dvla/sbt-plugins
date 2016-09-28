@@ -14,7 +14,7 @@ val commonSettings = Seq(
 ) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
 lazy val microservicesSandbox = Project("microservices-sandbox", file("microservices-sandbox"))
-  .settings(version := "2.0.0-SNAPSHOT")
+  .settings(version := "2.0.0")
   .settings(commonSettings:_*)
   .settings(
     libraryDependencies ++= Seq(
