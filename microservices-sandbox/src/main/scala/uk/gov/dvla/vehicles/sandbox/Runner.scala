@@ -6,17 +6,11 @@ import java.net.{URL, URLClassLoader}
 import org.apache.commons.io.FileUtils
 import sbt.Scoped.{Apply2, Apply3}
 import sbt.{Attributed, Def, File, ForkOptions, Task}
-import PrerequisitesCheck.SecretRepoOfflineFolder
+import PrerequisitesCheck.GeneratedConfigFolder
 import scala.util.Properties.lineSeparator
 
 object Runner {
-  val secretProperty = "DECRYPT_PASSWORD"
-  val secretProperty2 = "GIT_SECRET_PASSPHRASE"
-  val decryptPassword: Option[String] = sys.props.get(secretProperty)
-    .orElse(sys.env.get(secretProperty))
-    .orElse(sys.props.get(secretProperty2))
-    .orElse(sys.env.get(secretProperty2))
-
+  val ansibleRepoName = "ansibleRepo"
   type ITask[T]  = Def.Initialize[Task[T]]
 
   /**
@@ -34,29 +28,29 @@ object Runner {
     new Apply3((a, b, c)).apply((a, b, c) => a.flatMap(x => b.flatMap(x => c)))
 
   /**
-    * Returns a File object that points to the secretRepo sub directory in the given target folder
+    * Returns a File object that points to the ansibleRepo sub directory in the given target folder
     *
     * @param targetFolder the target folder of a web app that is using the sandbox plugin
-    * @return a File object that points to the secretRepo sub directory in the given target folder
+    * @return a File object that points to the ansibleRepo sub directory in the given target folder
     */
-  def secretRepoLocation(targetFolder: File): File =
-    new File(targetFolder, "secretRepo")
+  def ansibleRepoLocation(targetFolder: File): File =
+    new File(targetFolder, ansibleRepoName)
 
   /**
     * Returns the directory that contains the micro service and web app configuration for the sandbox
-    * If the SecretRepoOfflineFolder is specified then the sandbox looks for the config in this directory,
+    * If the GeneratedConfigFolder is specified then the sandbox looks for the config in this directory,
     * which will be /opt.
-    * However, if the SecretRepoOfflineFolder is not specified then the sandbox looks for the config in
+    * However, if the GeneratedConfigFolder is not specified then the sandbox looks for the config in
     * the web app target/opt directory.
     *
     * @param targetFolder the web app target directory
     * @return the directory that contains the micro service and web app configuration files
     */
   def configLocation(targetFolder: File): File =
-    SecretRepoOfflineFolder.fold {
+    GeneratedConfigFolder.fold {
       new File(targetFolder, "opt")
-    } { secretRepoOfflineFolder =>
-      new File(secretRepoOfflineFolder)
+    } { generatedConfigFolder =>
+      new File(generatedConfigFolder)
     }
 
   /**

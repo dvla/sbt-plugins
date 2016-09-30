@@ -1,7 +1,7 @@
 package uk.gov.dvla.vehicles.sandbox
 
 import org.apache.commons.io.FilenameUtils
-import Runner.{configLocation, secretRepoLocation}
+import Runner.{configLocation, ansibleRepoLocation, ansibleRepoName}
 import SandboxSettings.webAppSecrets
 import sbt.Keys.{baseDirectory, target}
 import sbt.{Def, File, IO, ThisProject}
@@ -9,33 +9,33 @@ import scala.sys.process.Process
 
 object PrerequisitesCheck {
   private final val GitBranch = "develop"
-  private final val SecretRepoOfflineFolderKey = "SANDBOX_OFFLINE_SECRET_REPO_FOLDER"
-  private final val SecretRepoGitUrlKey = "SANDBOX_SECRET_REPO_GIT_URL"
+  private final val GeneratedConfigFolderKey = "SANDBOX_GENERATED_CONFIG_FOLDER"
+  private final val AnsibleRepoGitUrlKey = "SANDBOX_ANSIBLE_REPO_GIT_URL"
 
-  final val SecretRepoOfflineFolder: Option[String] = sys.props.get(SecretRepoOfflineFolderKey)
-    .orElse(sys.env.get(SecretRepoOfflineFolderKey))
+  final val GeneratedConfigFolder: Option[String] = sys.props.get(GeneratedConfigFolderKey)
+    .orElse(sys.env.get(GeneratedConfigFolderKey))
 
-  private final val SecretRepoGitUrl: Option[String] = sys.props.get(SecretRepoGitUrlKey)
-    .orElse(sys.env.get(SecretRepoGitUrlKey))
+  private final val AnsibleRepoGitUrl: Option[String] = sys.props.get(AnsibleRepoGitUrlKey)
+    .orElse(sys.env.get(AnsibleRepoGitUrlKey))
 
   lazy val prerequisitesCheck = Def.task {
 
     /**
-      * If SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been specified then we skip the cloning or updating of the
+      * If SANDBOX_GENERATED_CONFIG_FOLDER has been specified then we skip the cloning or updating of the
       * Ansible repository and use the config that should have been previously generated in the /opt directory.
       * If it has not been set then we will either do a fresh clone of the repository or will perform an update
       * if it has been previously cloned. In both cases we deal with the branch specified in the GitBranch constant.
       *
-      * @param secretRepo the secretRepo directory in the target directory of the exemplar
+      * @param ansibleRepo the ansibleRepo directory in the target directory of the exemplar
       */
-    def updateSecretVehiclesOnline(secretRepo: File) {
-      SecretRepoOfflineFolder.fold {
-        // SecretRepoOfflineFolder has not been specified by the developer so pull down the latest from git
-        val secretRepoLocalPath = secretRepo.getAbsolutePath
+    def updateAnsibleRepo(ansibleRepo: File) {
+      GeneratedConfigFolder.fold {
+        // GeneratedConfigFolder has not been specified by the developer so pull down the latest from git
+        val ansibleRepoLocalPath = ansibleRepo.getAbsolutePath
 
-        if (new File(secretRepo, ".git").exists()) {
-          val gitOptions = s"--work-tree $secretRepoLocalPath --git-dir $secretRepoLocalPath/.git"
-          // If we find the .git directory inside the secretRepo then we just pull the develop branch
+        if (new File(ansibleRepo, ".git").exists()) {
+          val gitOptions = s"--work-tree $ansibleRepoLocalPath --git-dir $ansibleRepoLocalPath/.git"
+          // If we find the .git directory inside the ansibleRepo then we just pull the develop branch
           println(s"${scala.Console.YELLOW}" +
             "Now going to update existing git repo with the following command: " +
             s"git $gitOptions pull origin $GitBranch" +
@@ -45,22 +45,22 @@ object PrerequisitesCheck {
           // Otherwise we need to do a fresh git clone
           println(s"${scala.Console.YELLOW}" +
             "Now going to run a fresh git clone with the following command: " +
-            s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath" +
+            s"git clone -b $GitBranch ${AnsibleRepoGitUrl.get} $ansibleRepoLocalPath" +
             s"${scala.Console.RESET}")
-          println(Process(s"git clone -b $GitBranch ${SecretRepoGitUrl.get} $secretRepoLocalPath").!!<)
+          println(Process(s"git clone -b $GitBranch ${AnsibleRepoGitUrl.get} $ansibleRepoLocalPath").!!<)
           println("done.")
         }
-      } { secretRepoOfflineFolder =>
-        // SecretRepoOfflineFolder has been specified by the developer so log that no cloning
+      } { generatedConfigFolder =>
+        // GeneratedConfigFolder has been specified by the developer so log that no cloning
         // or updating of the Ansible repo will happen
         println(s"${scala.Console.YELLOW}" +
-          s"Skipping cloning or updating of repo because $SecretRepoOfflineFolderKey has been set to $secretRepoOfflineFolder" +
+          s"Skipping cloning or updating of repo because $GeneratedConfigFolderKey has been set to $generatedConfigFolder" +
           s"${scala.Console.RESET}")
       }
     }
 
     validatePrerequisites()
-    updateSecretVehiclesOnline(secretRepoLocation((target in ThisProject).value))
+    updateAnsibleRepo(ansibleRepoLocation((target in ThisProject).value))
     generateConfigFiles()
     deployWebAppSecrets(
       // Defined in the web app that is using the sandbox eg. vehicles-online/conf/vehiclesOnline.conf
@@ -74,20 +74,17 @@ object PrerequisitesCheck {
   }
 
   /**
-    * If the SANDBOX_OFFLINE_SECRET_REPO_FOLDER has not been set eg. it is completely missing then the sandbox will
+    * If the SANDBOX_GENERATED_CONFIG_FOLDER has not been set eg. it is completely missing then the sandbox will
     * need to connect to Git and clone the repo within the target directory of the web app which is running the
     * sandbox. In this scenario the following prerequisite checks are performed:
     * 1. validate the git client is installed
-    * 2. validate SANDBOX_SECRET_REPO_GIT_URL has been set eg. git@gitlab.preview-dvla.co.uk:dvla/ansible-dvla-playbooks.git
-    * 3. validate we can ssh to the git host part of the SANDBOX_SECRET_REPO_GIT_URL
+    * 2. validate SANDBOX_ANSIBLE_REPO_GIT_URL has been set eg. git@gitlab.preview-dvla.co.uk:dvla/ansible-dvla-playbooks.git
+    * 3. validate we can ssh to the git host part of the SANDBOX_ANSIBLE_REPO_GIT_URL
     * eg. ssh -T git@gitlab.preview-dvla.co.uk
     *
-    * If the SANDBOX_OFFLINE_SECRET_REPO_FOLDER has been set and points to a previously cloned repo, the following
+    * If the SANDBOX_GENERATED_CONFIG_FOLDER has been set and points to a previously cloned repo, the following
     * checks are performed:
     * 1. validate that the specified folder exists
-    *
-    * In both cases the final check is to verify that either DECRYPT_PASSWORD or GIT_SECRET_PASSPHRASE have been set
-    * which is needed when decrypting encrypted files in the secret repo
     */
   private def validatePrerequisites() {
     def validateGitIsInstalled() = {
@@ -99,15 +96,15 @@ object PrerequisitesCheck {
       }
     }
 
-    def validateSecretRepoGitUrlKey() = {
-      print(s"${scala.Console.YELLOW}Verifying $SecretRepoGitUrlKey is passed...${scala.Console.RESET}")
-      SecretRepoGitUrl.fold {
+    def validateAnsibleRepoGitUrlKey() = {
+      print(s"${scala.Console.YELLOW}Verifying $AnsibleRepoGitUrlKey is passed...${scala.Console.RESET}")
+      AnsibleRepoGitUrl.fold {
         println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
-        println(s"""${scala.Console.RED}"$SecretRepoGitUrlKey" not set. Please set it either as jvm arg of sbt """
-          + s""" "-D$SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'""""
-          + s" or export it in the environment with export $SecretRepoGitUrlKey='git@git-host:theSecretRepoProjectName'"
+        println(s"""${scala.Console.RED}"$AnsibleRepoGitUrlKey" not set. Please set it either as jvm arg of sbt """
+          + s""" "-D$AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'""""
+          + s" or export it in the environment with export $AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'"
           + s" ${scala.Console.RESET}")
-        throw new Exception(s""" There is no "$SecretRepoGitUrlKey" set neither as env variable nor as JVM property """)
+        throw new Exception(s""" There is no "$AnsibleRepoGitUrlKey" set neither as env variable nor as JVM property """)
       } { secret => println(s"done set to $secret") }
     }
 
@@ -115,7 +112,7 @@ object PrerequisitesCheck {
       val hostPrefix = "git@"
       // git@gitlab.preview-dvla.co.uk:dvla/secret-vehicles-online.git -> gitlab.preview-dvla.co.uk
       val gitHost: Option[String] =
-        SecretRepoGitUrl.map(url=> url.replace(hostPrefix, "").substring(0, url.indexOf(":") - hostPrefix.length))
+        AnsibleRepoGitUrl.map(url=> url.replace(hostPrefix, "").substring(0, url.indexOf(":") - hostPrefix.length))
 
       print(s"${scala.Console.YELLOW}Verifying there is ssh access to ${gitHost.get}...${scala.Console.RESET}")
       if (Process(s"ssh -T git@${gitHost.get}").! != 0) {
@@ -126,20 +123,20 @@ object PrerequisitesCheck {
       }
     }
 
-    def verifySecretRepoOfflineFolder(secretRepoOfflineFolder: String) = {
-      println(s"${scala.Console.YELLOW}There is an offline folder $SecretRepoOfflineFolderKey=$secretRepoOfflineFolder"
-        + s" defined to be used as a secret repo.${scala.Console.RESET}")
-      print(s"${scala.Console.YELLOW}Verifying that $secretRepoOfflineFolder exists and is set correctly...${scala.Console.RESET}")
+    def verifyGeneratedConfigFolder(generatedConfigFolder: String) = {
+      println(s"${scala.Console.YELLOW}There is a config folder $GeneratedConfigFolderKey=$generatedConfigFolder"
+        + s" defined to be used.${scala.Console.RESET}")
+      print(s"${scala.Console.YELLOW}Verifying that $generatedConfigFolder exists and is set correctly...${scala.Console.RESET}")
 
-      secretRepoOfflineFolder match {
+      generatedConfigFolder match {
         case folder if !new File(folder).exists() =>
           println(s"${scala.Console.RED}FAILED.")
-          println(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist${scala.Console.RESET}")
-          throw new Exception(s"The offline secret repo folder $secretRepoOfflineFolder doesn't exist")
+          println(s"The generated config folder $generatedConfigFolder doesn't exist${scala.Console.RESET}")
+          throw new Exception(s"The generated config folder $generatedConfigFolder doesn't exist")
         case folder if folder != "/opt" =>
           println(s"${scala.Console.RED}FAILED.")
-          println(s"The offline secret repo folder $secretRepoOfflineFolder is not set to /opt${scala.Console.RESET}")
-          val msg = s"The offline secret repo folder is set to $secretRepoOfflineFolder. " +
+          println(s"The generated config folder $generatedConfigFolder is not set to /opt${scala.Console.RESET}")
+          val msg = s"The generated config folder is set to $generatedConfigFolder. " +
             "If you are going to set it, it must be set to /opt"
           throw new Exception(msg)
         case _ =>
@@ -147,32 +144,32 @@ object PrerequisitesCheck {
       }
     }
 
-    SecretRepoOfflineFolder.fold {
-      // Handles the case when the secretRepoOfflineFolder is None eg. it has not been specified by the developer.
+    GeneratedConfigFolder.fold {
+      // Handles the case when the GeneratedConfigFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
       // that will allow us to do this
-      println(s"${scala.Console.YELLOW}$SecretRepoOfflineFolderKey has not been set so we will now verify we can " +
+      println(s"${scala.Console.YELLOW}$GeneratedConfigFolderKey has not been set so we will now verify we can " +
         s"connect to the Git secret repo for later cloning...${scala.Console.RESET}")
       validateGitIsInstalled()
-      validateSecretRepoGitUrlKey()
+      validateAnsibleRepoGitUrlKey()
       validateCanSshToGitHost()
-    } { secretRepoOfflineFolder =>
-      // Handles the case when the secretRepoOfflineFolder has been specified
-      verifySecretRepoOfflineFolder(secretRepoOfflineFolder)
+    } { generatedConfigFolder =>
+      // Handles the case when the generated config folder has been specified
+      verifyGeneratedConfigFolder(generatedConfigFolder)
     }
   }
 
   private def generateConfigFiles(): Unit = {
-    SecretRepoOfflineFolder.fold {
-      val applyPlaybookCommand = "./target/secretRepo/gapply " +
-        "-i target/secretRepo/inventory/sandbox target/secretRepo/sandbox-accept.yml -t sandbox -e accept=yes"
+    GeneratedConfigFolder.fold {
+      val applyPlaybookCommand = s"./target/$ansibleRepoName/gapply " +
+        s"-i target/$ansibleRepoName/inventory/sandbox target/$ansibleRepoName/sandbox-accept.yml -t sandbox -e accept=yes"
       println(s"${scala.Console.YELLOW}" +
         s"Now generating the config with the following command: $applyPlaybookCommand${scala.Console.RESET}")
       println(Process(applyPlaybookCommand).!!) // Run the playbook
       println("done.")
     } { _ =>
       println(s"${scala.Console.YELLOW}" +
-        s"Skipping the generate config files step because $SecretRepoOfflineFolderKey is set." +
+        s"Skipping the generate config files step because $GeneratedConfigFolderKey is set." +
         s"${scala.Console.RESET}")
     }
   }
