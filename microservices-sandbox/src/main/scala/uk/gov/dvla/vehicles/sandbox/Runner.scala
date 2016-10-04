@@ -110,18 +110,18 @@ object Runner {
   /**
     * Details used to extract the typesafe configuration file out of the secrets repository
     *
-    * @param decryptedConfigDir the location of the Ansible decrypted config dir
-    * @param decryptedConfig the path to the decrypted configuration that will have a transformation applied to it
+    * @param configDir the location of the Ansible config dir
+    * @param config the path to the configuration that will have a transformation applied to it
     * @param output case class that contains the config file that will be transformed along with some transformation
     *               that will setup the config file for use in the sandbox
-    *               By default no transformation is applied to the decrypted config.
+    *               By default no transformation is applied to the config.
     */
-  case class ConfigDetails(decryptedConfigDir: File,
-                           decryptedConfig: String,
+  case class ConfigDetails(configDir: File,
+                           config: String,
                            output: Option[ConfigOutput])
 
   /**
-    * Configuration about where to write a decrypted configuration along with an optional transform over it.
+    * Configuration about where to write a configuration along with an optional transform over it.
     *
     * @param transformedOutput the file to be written after applying the transformation function.
     * @param transform transform to apply to the config file so it will work in the sandbox. Could be used
@@ -131,12 +131,12 @@ object Runner {
   case class ConfigOutput(transformedOutput: File, transform: String => String = s => s)
 
   /**
-    * This method will decrypt and transform the secrets, based on the given configDetails. It creates a new class
-    * loader based on the given classpath and will call the given function with that newly created class loader.
+    * This method will transform the configuration for sandbox use, based on the given configDetails. It creates a new
+    * class loader based on the given classpath and will call the given function with that newly created class loader.
     * The secrets will be within the classpath of the newly created class loader.
     *
     * @param prjClassPath the physical location of the jar files/folders on the file system (classpath elements)
-    * @param configDetails handles the decrypting/transformation of the secrets
+    * @param configDetails handles the transformation of the config
     * @param runMainMethod the main method to call
     * @param parentClassLoader the ClassLoader to be used as a parent of the newly created ClassLoader
     *                          defined by @prjClassPath
@@ -145,11 +145,11 @@ object Runner {
                  configDetails: Option[ConfigDetails],
                  runMainMethod: (ClassLoader) => Any = runJavaMain("dvla.microservice.Boot"),
                  parentClassLoader: ClassLoader =  ClassLoader.getSystemClassLoader.getParent): Unit = try {
-    configDetails.foreach { case ConfigDetails(decryptedConfigDir, decryptedConfig, output) =>
-      val decryptedConfigFile = new File(decryptedConfigDir, decryptedConfig)
-      println(s"${scala.Console.YELLOW}Applying sandbox transformation to $decryptedConfigFile${scala.Console.RESET}")
-      output.foreach { case ConfigOutput(decryptedOutput, transform) =>
-        copyAndTransform(decryptedConfigDir.getAbsolutePath, decryptedConfigFile, decryptedOutput, transform)
+    configDetails.foreach { case ConfigDetails(configDir, config, output) =>
+      val configFile = new File(configDir, config)
+      println(s"${scala.Console.YELLOW}Applying sandbox transformation to $configFile${scala.Console.RESET}")
+      output.foreach { case ConfigOutput(outputToTransform, transform) =>
+        copyAndTransform(configDir.getAbsolutePath, configFile, outputToTransform, transform)
       }
     }
 
@@ -196,20 +196,20 @@ object Runner {
     * appropriate playbook applies a transformation function to it and writes it to the destination file that
     * is specified.
     *
-    * @param decryptedConfigDir the location of the Ansible config dir
-    * @param decryptedConfig path to the decrypted config file, which is relative to the decrypted config dir
+    * @param ansibleConfigDir the location of the Ansible config dir
+    * @param config path to the config file, which is relative to the ansible config dir
     * @param dest the location of the transformed file
-    * @param decryptedTransform a transformation to be applied to the decrypted config string before it's written.
+    * @param transform a transformation to be applied to the config string before it's written.
     */
-  def copyAndTransform(decryptedConfigDir: String, decryptedConfig: File, dest: File, decryptedTransform: String => String) {
-    if (!decryptedConfig.exists()) {
-      throw new Exception(s"The config file does not exist - $decryptedConfig")
+  def copyAndTransform(ansibleConfigDir: String, config: File, dest: File, transform: String => String) {
+    if (!config.exists()) {
+      throw new Exception(s"The config file does not exist - $config")
     }
-    // Apply the transformation function to the contents of the decrypted file that the Ansible playbook has created
-    // The decryptedTransform function contains the logic for what to do to the String that is passed to it
+    // Apply the transformation function to the contents of the file that the Ansible playbook has created
+    // The transform function contains the logic for what to do to the String that is passed to it
     // in order to transform it. Remember this is may originally have been a curried function whose first argument list
     // has been supplied so we are now just dealing with a String => String function
-    val transformedFile = decryptedTransform(FileUtils.readFileToString(decryptedConfig))
+    val transformedFile = transform(FileUtils.readFileToString(config))
     // Replace the contents with the new contents after they have been through the transformation
     FileUtils.writeStringToFile(dest, transformedFile)
     println(s"${scala.Console.YELLOW}Wrote transformed file contents to $dest${scala.Console.RESET}")
