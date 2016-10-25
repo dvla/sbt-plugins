@@ -11,7 +11,7 @@ val commonSettings = Seq(
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   BintrayCredentials.bintrayCredentialsTask,
   bintray.Keys.bintrayOrganization := None
-) //++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
+) ++ bintrayPublishSettings // Comment this in before pushing to GitHub so it gets automatically built and published to bintray
 
 lazy val microservicesSandbox = Project("microservices-sandbox", file("microservices-sandbox"))
   .settings(version := "2.0.0")
