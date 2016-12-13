@@ -31,22 +31,9 @@ object BuildDetailGenerator extends AutoPlugin {
        |$commits
     """.stripMargin
 
-//  s"""{
-//       |  "Name": "$name",
-//       |  "Version": "$version",
-//       |  "Build on": "${new Date()}",
-//       |  "Build by": "${prop("user.name")}@${java.net.InetAddress.getLocalHost.getHostName}",
-//       |  "Build OS": "${prop("os.name")}-${prop("os.version")}",
-//       |  "Build Java": "${prop("java.version")} ${prop("java.vendor")}",
-//       |  "Build SBT": "$sbtVersion",
-//       |  $commits
-//    """.stripMargin
-
   def commits = {
     val gitRepoFolder = new File(".").getCanonicalPath
     val gitOptions = Seq("--work-tree", gitRepoFolder, "--git-dir", s"$gitRepoFolder/.git")
-//    val gitCommand = Seq("git") ++ gitOptions ++ Seq("log", """--pretty=format:'{"sha":"%H", "upd":"%d", "message":"%s", "date":"%ai", "author":"%an"}'""", "-15")
-    //    try s""""commits": [""" + Process(gitCommand).!!<.linesIterator.mkString(",") + "]"
     val gitCommand = Seq("git") ++ gitOptions ++ Seq("log", """--pretty=format:%ai %H %s -- <%ar by %an> %d""", "-15")
     try Process(gitCommand).!!<
     catch { case NonFatal(t) => "Cannot fetch git history: \n" + t.getStackTraceString}

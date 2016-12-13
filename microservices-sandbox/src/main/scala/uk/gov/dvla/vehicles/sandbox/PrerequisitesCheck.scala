@@ -18,6 +18,9 @@ object PrerequisitesCheck {
   private final val AnsibleRepoGitUrl: Option[String] = sys.props.get(AnsibleRepoGitUrlKey)
     .orElse(sys.env.get(AnsibleRepoGitUrlKey))
 
+  private def colorise(ansiColor: String)(output: String) =
+    s"$ansiColor$output${scala.Console.RESET}"
+
   lazy val prerequisitesCheck = Def.task {
 
     /**
@@ -35,27 +38,31 @@ object PrerequisitesCheck {
 
         if (new File(ansibleRepo, ".git").exists()) {
           val gitOptions = s"--work-tree $ansibleRepoLocalPath --git-dir $ansibleRepoLocalPath/.git"
-          // If we find the .git directory inside the ansibleRepo then we just pull the develop branch
-          println(s"${scala.Console.YELLOW}" +
-            "Now going to update existing git repo with the following command: " +
-            s"git $gitOptions pull origin $GitBranch" +
-            s"${scala.Console.RESET}")
-          println(Process(s"git $gitOptions pull origin $GitBranch").!!<)
+          // If we find the .git directory inside the ansibleRepo then fetch the latest
+          val gitFetchLatestCommit = s"git $gitOptions fetch --depth=1 origin $GitBranch"
+          val gitResetToLatestCommit = s"git $gitOptions reset --hard origin/$GitBranch"
+          println(colorise(scala.Console.YELLOW)(
+            s"""Now going to update existing git repo with the following commands:
+              |$gitFetchLatestCommit
+              |$gitResetToLatestCommit""".stripMargin
+          ))
+          println(Process(gitFetchLatestCommit).!!<)
+          println(Process(gitResetToLatestCommit).!!<)
         } else {
           // Otherwise we need to do a fresh git clone
-          println(s"${scala.Console.YELLOW}" +
-            "Now going to run a fresh git clone with the following command: " +
-            s"git clone -b $GitBranch ${AnsibleRepoGitUrl.get} $ansibleRepoLocalPath" +
-            s"${scala.Console.RESET}")
-          println(Process(s"git clone -b $GitBranch ${AnsibleRepoGitUrl.get} $ansibleRepoLocalPath").!!<)
+          val gitClone = s"git clone --depth=1 -b $GitBranch ${AnsibleRepoGitUrl.get} $ansibleRepoLocalPath"
+          println(colorise(scala.Console.YELLOW)(
+            s"Now going to run a fresh git clone with the following command: $gitClone"
+          ))
+          println(Process(gitClone).!!<)
           println("done.")
         }
       } { generatedConfigFolder =>
         // GeneratedConfigFolder has been specified by the developer so log that no cloning
         // or updating of the Ansible repo will happen
-        println(s"${scala.Console.YELLOW}" +
-          s"Skipping cloning or updating of repo because $GeneratedConfigFolderKey has been set to $generatedConfigFolder" +
-          s"${scala.Console.RESET}")
+        println(colorise(scala.Console.YELLOW)(
+          s"Skipping cloning or updating of repo because $GeneratedConfigFolderKey has been set to $generatedConfigFolder"
+        ))
       }
     }
 
@@ -88,23 +95,26 @@ object PrerequisitesCheck {
     */
   private def validatePrerequisites() {
     def validateGitIsInstalled() = {
-      print(s"${scala.Console.YELLOW}Verifying git is installed...${scala.Console.RESET}")
+      print(colorise(scala.Console.YELLOW)("Verifying git is installed..."))
       if (Process("git --version").! != 0) {
-        println(s"${scala.Console.RED}FAILED.")
-        println(s"You don't have git installed. Please install git and try again${scala.Console.RESET}")
+        println(colorise(scala.Console.RED)(
+          """FAILED.
+           |You don't have git installed. Please install git and try again""".stripMargin
+        ))
         throw new Exception("You don't have git installed. Please install git and try again")
       }
     }
 
     def validateAnsibleRepoGitUrlKey() = {
-      print(s"${scala.Console.YELLOW}Verifying $AnsibleRepoGitUrlKey is passed...${scala.Console.RESET}")
+      print(colorise(scala.Console.YELLOW)("Verifying $AnsibleRepoGitUrlKey is passed..."))
       AnsibleRepoGitUrl.fold {
-        println(s"""${scala.Console.RED}FAILED.${scala.Console.RESET}""")
-        println(s"""${scala.Console.RED}"$AnsibleRepoGitUrlKey" not set. Please set it either as jvm arg of sbt """
-          + s""" "-D$AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'""""
-          + s" or export it in the environment with export $AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'"
-          + s" ${scala.Console.RESET}")
-        throw new Exception(s""" There is no "$AnsibleRepoGitUrlKey" set neither as env variable nor as JVM property """)
+        println(colorise(scala.Console.RED)(
+          s"""FAILED.
+            |$AnsibleRepoGitUrlKey" not set. Please set it either as jvm arg of sbt
+            |-D$AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'
+            |or export it in the environment with export $AnsibleRepoGitUrlKey='git@git-host:theAnsibleRepoProjectName'""".stripMargin
+        ))
+        throw new Exception(s"""There is no "$AnsibleRepoGitUrlKey" set neither as env variable nor as JVM property""")
       } { secret => println(s"done set to $secret") }
     }
 
@@ -114,28 +124,35 @@ object PrerequisitesCheck {
       val gitHost: Option[String] =
         AnsibleRepoGitUrl.map(url=> url.replace(hostPrefix, "").substring(0, url.indexOf(":") - hostPrefix.length))
 
-      print(s"${scala.Console.YELLOW}Verifying there is ssh access to ${gitHost.get}...${scala.Console.RESET}")
+      print(colorise(scala.Console.YELLOW)(s"Verifying there is ssh access to ${gitHost.get}..."))
       if (Process(s"ssh -T git@${gitHost.get}").! != 0) {
-        println(s"${scala.Console.RED}FAILED.")
-        println(s"Cannot connect to git@${gitHost.get}. Please check your ssh connection to ${gitHost.get}. "
-          + s"You might need to import your public key to ${gitHost.get}${scala.Console.RESET}")
+        println(colorise(scala.Console.RED)(
+          s"""FAILED.
+            |Cannot connect to git@${gitHost.get}. Please check your ssh connection to ${gitHost.get}.
+            |You might need to import your public key to ${gitHost.get}""".stripMargin
+        ))
         throw new Exception(s"Cannot connect to git@${gitHost.get}. Please check your ssh connection to ${gitHost.get}.")
       }
     }
 
     def verifyGeneratedConfigFolder(generatedConfigFolder: String) = {
-      println(s"${scala.Console.YELLOW}There is a config folder $GeneratedConfigFolderKey=$generatedConfigFolder"
-        + s" defined to be used.${scala.Console.RESET}")
-      print(s"${scala.Console.YELLOW}Verifying that $generatedConfigFolder exists and is set correctly...${scala.Console.RESET}")
+      print(colorise(scala.Console.YELLOW)(
+        s"""There is a config folder $GeneratedConfigFolderKey=$generatedConfigFolder defined to be used.
+          |Verifying that $generatedConfigFolder exists and is set correctly...""".stripMargin
+      ))
 
       generatedConfigFolder match {
         case folder if !new File(folder).exists() =>
-          println(s"${scala.Console.RED}FAILED.")
-          println(s"The generated config folder $generatedConfigFolder doesn't exist${scala.Console.RESET}")
+          println(colorise(scala.Console.RED)(
+            s"""FAILED.
+              |The generated config folder $generatedConfigFolder doesn't exist""".stripMargin
+          ))
           throw new Exception(s"The generated config folder $generatedConfigFolder doesn't exist")
         case folder if folder != "/opt" =>
-          println(s"${scala.Console.RED}FAILED.")
-          println(s"The generated config folder $generatedConfigFolder is not set to /opt${scala.Console.RESET}")
+          println(colorise(scala.Console.RED)(
+            s"""FAILED.
+              |The generated config folder $generatedConfigFolder is not set to /opt""".stripMargin
+          ))
           val msg = s"The generated config folder is set to $generatedConfigFolder. " +
             "If you are going to set it, it must be set to /opt"
           throw new Exception(msg)
@@ -148,8 +165,10 @@ object PrerequisitesCheck {
       // Handles the case when the GeneratedConfigFolder is None eg. it has not been specified by the developer.
       // Therefore, the sandbox will need to connect to Git and clone the repo so here we verify the prerequisites
       // that will allow us to do this
-      println(s"${scala.Console.YELLOW}$GeneratedConfigFolderKey has not been set so we will now verify we can " +
-        s"connect to the Git secret repo for later cloning...${scala.Console.RESET}")
+      println(colorise(scala.Console.YELLOW)(
+        s"$GeneratedConfigFolderKey has not been set so we will now verify we can " +
+          "connect to the Git secret repo for later cloning..."
+      ))
       validateGitIsInstalled()
       validateAnsibleRepoGitUrlKey()
       validateCanSshToGitHost()
@@ -163,14 +182,15 @@ object PrerequisitesCheck {
     GeneratedConfigFolder.fold {
       val applyPlaybookCommand = s"./target/$ansibleRepoName/gapply " +
         s"-i target/$ansibleRepoName/inventory/sandbox target/$ansibleRepoName/sandbox-accept.yml -t sandbox -e accept=yes"
-      println(s"${scala.Console.YELLOW}" +
-        s"Now generating the config with the following command: $applyPlaybookCommand${scala.Console.RESET}")
+      println(colorise(scala.Console.YELLOW)(
+        s"Now generating the config with the following command: $applyPlaybookCommand"
+      ))
       println(Process(applyPlaybookCommand).!!) // Run the playbook
       println("done.")
     } { _ =>
-      println(s"${scala.Console.YELLOW}" +
-        s"Skipping the generate config files step because $GeneratedConfigFolderKey is set." +
-        s"${scala.Console.RESET}")
+      println(colorise(scala.Console.YELLOW)(
+        s"Skipping the generate config files step because $GeneratedConfigFolderKey is set."
+      ))
     }
   }
 
@@ -181,13 +201,13 @@ object PrerequisitesCheck {
       // The secrets file is missing in the web apps conf directory so copy the generated file that
       // has been created under the opt directory into the conf directory
       val configFile = new File(configDir, secretsFilename)
-      print(s"${scala.Console.YELLOW}Copying the web app secrets from $configFile to $targetFile...${scala.Console.RESET}")
+      print(colorise(scala.Console.YELLOW)(s"Copying the web app secrets from $configFile to $targetFile..."))
       IO.copyFile(configFile, targetFile)
       println("done.")
     } else {
-      println(s"${scala.Console.YELLOW}" +
-        s"Web app secrets file $secretsFilename already exists - skipping deploy web app secrets step." +
-        s"${scala.Console.RESET}")
+      println(colorise(scala.Console.YELLOW)(
+        s"Web app secrets file $secretsFilename already exists - skipping deploy web app secrets step."
+      ))
     }
   }
 }
